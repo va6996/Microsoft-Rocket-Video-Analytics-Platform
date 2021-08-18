@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿using System;
+ using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -11,7 +11,7 @@ namespace FramePreProcessor
 {
     public class FrameDisplay
     {
-        static Dictionary<string, string> displayKVpairs = new Dictionary<string, string>();
+        public static Dictionary<string, string> displayKVpairs = new Dictionary<string, string>();
         static Dictionary<string, string> prev_displayKVpairs = new Dictionary<string, string>();
 
         public static void display(Mat resizedFrame)

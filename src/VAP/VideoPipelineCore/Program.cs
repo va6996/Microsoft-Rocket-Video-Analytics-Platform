@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿using AML.Client;
+using AML.Client;
 using BGSObjectDetector;
 using DarknetDetector;
 using DNNDetector;
@@ -288,10 +288,11 @@ namespace VideoPipelineCore
                 //print out stats
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / (DateTime.Now - startTime).TotalMilliseconds;
-                Console.WriteLine("{0} {1,-5} {2} {3,-5} {4} {5,-15} {6} {7,-10:N2} {8} {9,-10:N2}", 
-                                    "sFactor:", SAMPLING_FACTOR, "rFactor:", RESOLUTION_FACTOR, "FrameID:", frameIndex, "FPS:", fps, "avgFPS:", avgFps);
-                prevTime = DateTime.Now;
+                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - startTime).TotalMilliseconds);
+		        prevTime = DateTime.Now;
             }
+
+            Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
             Console.WriteLine("Done!");
         }
     }
