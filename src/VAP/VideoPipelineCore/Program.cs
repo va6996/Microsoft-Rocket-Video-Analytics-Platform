@@ -3,6 +3,9 @@
 
 using AML.Client;
 using BGSObjectDetector;
+using DarknetDetector;
+using DNNDetector;
+using DNNDetector.Config;
 using DNNDetector.Model;
 using LineDetector;
 using OpenCvSharp;
@@ -13,7 +16,6 @@ using System.Configuration;
 using System.Linq;
 using FramePreProcessor;
 using TFDetector;
-using Utils.Config;
 
 namespace VideoPipelineCore
 {
@@ -54,7 +56,8 @@ namespace VideoPipelineCore
             bool loop = false;
             bool displayRawVideo = false;
             bool displayBGSVideo = false;
-            Utils.Utils.cleanFolder(@OutputFolder.OutputFolderAll);
+            Utils.Utils.cleanFolderAll();
+
             //create pipeline components (initialization based on pplConfig)
 
             //-----Decoder-----
@@ -65,16 +68,53 @@ namespace VideoPipelineCore
 
             //-----Line Detector-----
             Detector lineDetector = new Detector(SAMPLING_FACTOR, RESOLUTION_FACTOR, lineFile, displayBGSVideo);
+            Dictionary<string, int> counts = null;
             Dictionary<string, bool> occupancy = null;
-            List<Tuple<string, int[]>> lines = lineDetector.multiLaneDetector.getAllLines();
+            List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
 
             //-----LineTriggeredDNN (TensorFlow)-----
             LineTriggeredDNNTF ltDNNTF = null;
             List<Item> ltDNNItemListTF = null;
-            if (new int[] { 5, 6 }.Contains(pplConfig))
+            if (new int[] { 5,6 }.Contains(pplConfig))
             {
                 ltDNNTF = new LineTriggeredDNNTF(lines);
                 ltDNNItemListTF = new List<Item>();
+            }
+
+            //-----LineTriggeredDNN (ONNX)-----
+            LineTriggeredDNNORTYolo ltDNNOnnx = null;
+            List<Item> ltDNNItemListOnnx = null;
+            if (new int[] { 7 }.Contains(pplConfig))
+            {
+                ltDNNOnnx = new LineTriggeredDNNORTYolo(Utils.Utils.ConvertLines(lines), "yolov3tiny");
+                ltDNNItemListOnnx = new List<Item>();
+            }
+
+            //-----CascadedDNN (Darknet)-----
+            CascadedDNNDarknet ccDNNDarknet = null;
+            List<Item> ccDNNItemListDarknet = null;
+            if (new int[] { 3 }.Contains(pplConfig))
+            {
+                ccDNNDarknet = new CascadedDNNDarknet(lines);
+                ccDNNItemListDarknet = new List<Item>();
+            }
+
+            //-----CascadedDNN (ONNX)-----
+            CascadedDNNORTYolo ccDNNOnnx = null;
+            List<Item> ccDNNItemListOnnx = null;
+            if (new int[] { 7 }.Contains(pplConfig))
+            {
+                ccDNNOnnx = new CascadedDNNORTYolo(Utils.Utils.ConvertLines(lines), "yolov3");
+                ccDNNItemListOnnx = new List<Item>();
+            }
+
+            //-----DNN on every frame (Darknet)-----
+            FrameDNNDarknet frameDNNDarknet = null;
+            List<Item> frameDNNDarknetItemList = null;
+            if (new int[] { 1 }.Contains(pplConfig))
+            {
+                frameDNNDarknet = new FrameDNNDarknet("YoloV3TinyCoco", Wrapper.Yolo.DNNMode.Frame, lines);
+                frameDNNDarknetItemList = new List<Item>();
             }
 
             //-----DNN on every frame (TensorFlow)-----
@@ -84,13 +124,21 @@ namespace VideoPipelineCore
             {
                 frameDNNTF = new FrameDNNTF(lines);
                 frameDNNTFItemList = new List<Item>();
-                Utils.Utils.cleanFolder(@OutputFolder.OutputFolderFrameDNNTF);
+            }
+
+            //-----DNN on every frame (ONNX)-----
+            FrameDNNOnnxYolo frameDNNOnnxYolo = null;
+            List<Item> frameDNNONNXItemList = null;
+            if (new int[] { 8 }.Contains(pplConfig))
+            {
+                frameDNNOnnxYolo = new FrameDNNOnnxYolo(Utils.Utils.ConvertLines(lines), "yolov3", Wrapper.ORT.DNNMode.Frame);
+                frameDNNONNXItemList = new List<Item>();
             }
 
             //-----Call ML models deployed on Azure Machine Learning Workspace-----
             AMLCaller amlCaller = null;
             List<bool> amlConfirmed;
-            if (new int[] { 5 }.Contains(pplConfig))
+            if (new int[] { 6 }.Contains(pplConfig))
             {
                 amlCaller = new AMLCaller(ConfigurationManager.AppSettings["AMLHost"],
                 Convert.ToBoolean(ConfigurationManager.AppSettings["AMLSSL"]),
@@ -106,6 +154,7 @@ namespace VideoPipelineCore
             if (!isVideoStream)
                 videoTotalFrame = decoder.getTotalFrameNum() - 1; //skip the last frame which could be wrongly encoded from vlc capture
 
+            long teleCountsBGS = 0, teleCountsCheapDNN = 0, teleCountsHeavyDNN = 0;
 
             //RUN PIPELINE 
             DateTime startTime = DateTime.Now;
@@ -141,33 +190,48 @@ namespace VideoPipelineCore
                 
 
                 //line detector
-                if (new int[] { 0, 4, 5, 6 }.Contains(pplConfig))
+                if (new int[] { 0, 3, 4, 5, 6, 7 }.Contains(pplConfig))
                 {
-                    occupancy = lineDetector.updateLineOccupancy(frame, frameIndex, fgmask, foregroundBoxes);
-                    foreach (var kv in occupancy)
-                    {
-                        // Console.WriteLine("Line Detector: Key {0} Value {1}", kv.Key, kv.Value);
-                    }
+                    (counts, occupancy) = lineDetector.updateLineResults(frame, frameIndex, fgmask, foregroundBoxes);
                 }
 
 
                 //cheap DNN
-                if (new int[] { 4, 5, 6 }.Contains(pplConfig))
+                if (new int[] { 3, 4 }.Contains(pplConfig))
                 {
-                    ltDNNItemListTF = ltDNNTF.Run(frame, frameIndex, occupancy, lines, category);
+                    ltDNNItemListDarknet = ltDNNDarknet.Run(frame, frameIndex, counts, lines, category);
+                    ItemList = ltDNNItemListDarknet;
+                }
+                else if (new int[] { 5, 6 }.Contains(pplConfig))
+                {
+                    ltDNNItemListTF = ltDNNTF.Run(frame, frameIndex, counts, lines, category);
                     ItemList = ltDNNItemListTF;
-                    if (ltDNNItemListTF != null)
-                    {
-                        // foreach (var kv in ltDNNItemListTF)
-                        // {
-                        //     if (kv != null)
-                        //     {
-                                Console.WriteLine("cheap DNN: Key {0}", ltDNNItemListTF.Count);
-                        //     }
-                        //
-                        // }
-                    }
-                    
+                }
+                else if (new int[] { 7 }.Contains(pplConfig))
+                {
+                    ltDNNItemListOnnx = ltDNNOnnx.Run(frame, frameIndex, counts, Utils.Utils.ConvertLines(lines), Utils.Utils.CatHashSet2Dict(category), ref teleCountsCheapDNN, true);
+                    ItemList = ltDNNItemListOnnx;
+                }
+
+
+                //heavy DNN
+                if (new int[] { 3 }.Contains(pplConfig))
+                {
+                    ccDNNItemListDarknet = ccDNNDarknet.Run(frame, frameIndex, ltDNNItemListDarknet, lines, category);
+                    ItemList = ccDNNItemListDarknet;
+                }
+                else if (new int[] { 7 }.Contains(pplConfig))
+                {
+                    ccDNNItemListOnnx = ccDNNOnnx.Run(frameIndex, ItemList, Utils.Utils.ConvertLines(lines), Utils.Utils.CatHashSet2Dict(category), ref teleCountsHeavyDNN, true);
+                    ItemList = ccDNNItemListOnnx;
+                }
+
+
+                //frameDNN with Darknet Yolo
+                if (new int[] { 1 }.Contains(pplConfig))
+                {
+                    frameDNNDarknetItemList = frameDNNDarknet.Run(Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frame)), frameIndex, lines, category, System.Drawing.Brushes.Pink);
+                    ItemList = frameDNNDarknetItemList;
                 }
 
 
@@ -183,8 +247,16 @@ namespace VideoPipelineCore
                 }
 
 
+                //frame DNN ONNX Yolo
+                if (new int[] { 8 }.Contains(pplConfig))
+                {
+                    frameDNNONNXItemList = frameDNNOnnxYolo.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    ItemList = frameDNNONNXItemList;
+                }
+
+
                 //Azure Machine Learning
-                if (new int[] { 5 }.Contains(pplConfig))
+                if (new int[] { 6 }.Contains(pplConfig))
                 {
                     amlConfirmed = AMLCaller.Run(frameIndex, ItemList, category).Result;
                 }
@@ -216,16 +288,11 @@ namespace VideoPipelineCore
                 //print out stats
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / (DateTime.Now - startTime).TotalMilliseconds;
-                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - prevTime).TotalMilliseconds);
+                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - startTime).TotalMilliseconds);
 		        prevTime = DateTime.Now;
             }
 
-            foreach (var pair in FramePreProcessor.FrameDisplay.displayKVpairs)
-            {
-                Console.WriteLine("{0}: {1}", pair.Key, pair.Value);
-            }
-
-            // Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
+            Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
             Console.WriteLine("Done!");
         }
     }

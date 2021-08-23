@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿using DNNDetector.Config;
+using DNNDetector.Config;
 using DNNDetector.Model;
 using OpenCvSharp;
 using System;
@@ -24,20 +24,16 @@ namespace DarknetDetector
             frameBufferCcDNN = new FrameBuffer(DNNConfig.FRAME_SEARCH_RANGE);
 
             frameDNNYolo = new FrameDNNDarknet(YOLOCONFIG, DNNMode.CC, rFactor);
-
-            Utils.Utils.cleanFolder(@OutputFolder.OutputFolderCcDNN);
         }
 
-        public CascadedDNNDarknet(List<Tuple<string, int[]>> lines)
+        public CascadedDNNDarknet(List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines)
         {
             frameBufferCcDNN = new FrameBuffer(DNNConfig.FRAME_SEARCH_RANGE);
 
             frameDNNYolo = new FrameDNNDarknet(YOLOCONFIG, DNNMode.CC, lines);
-
-            Utils.Utils.cleanFolder(@OutputFolder.OutputFolderCcDNN);
         }
 
-        public List<Item> Run(Mat frame, int frameIndex, List<Item> ltDNNItemList, List<Tuple<string, int[]>> lines, HashSet<string> category)
+        public List<Item> Run(Mat frame, int frameIndex, List<Item> ltDNNItemList, List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines, HashSet<string> category)
         {
             if (ltDNNItemList == null)
             {
@@ -56,9 +52,8 @@ namespace DarknetDetector
                 else
                 {
                     List<YoloTrackingItem> analyzedTrackingItems = null;
-                    int subLineID = lines[ltDNNItem.TriggerLineID].Item2.Length;
-                    frameDNNYolo.SetTrackingPoint(new System.Drawing.Point((int)((lines[ltDNNItem.TriggerLineID].Item2[subLineID - 4] + lines[ltDNNItem.TriggerLineID].Item2[subLineID - 2]) / 2),
-                                                                (int)((lines[ltDNNItem.TriggerLineID].Item2[subLineID - 3] + lines[ltDNNItem.TriggerLineID].Item2[subLineID - 1]) / 2))); //only needs to check the last line in each row
+                    frameDNNYolo.SetTrackingPoint(new System.Drawing.Point((int)((lines[ltDNNItem.TriggerLineID].coordinates.p1.X + lines[ltDNNItem.TriggerLineID].coordinates.p2.X) / 2),
+                                                                (int)((lines[ltDNNItem.TriggerLineID].coordinates.p1.Y + lines[ltDNNItem.TriggerLineID].coordinates.p2.Y) / 2))); //only needs to check the last line in each row
                     byte[] imgByte = ltDNNItem.RawImageData;
 
                     Console.WriteLine("** Calling Heavy");

@@ -19,6 +19,18 @@ namespace Utils
             foreach (FileInfo file in di.GetFiles()) file.Delete();
         }
 
+        public static void cleanFolderAll()
+        {
+            cleanFolder(Config.OutputFolder.OutputFolderAll);
+            cleanFolder(Config.OutputFolder.OutputFolderBGSLine);
+            cleanFolder(Config.OutputFolder.OutputFolderLtDNN);
+            cleanFolder(Config.OutputFolder.OutputFolderCcDNN);
+            cleanFolder(Config.OutputFolder.OutputFolderAML);
+            cleanFolder(Config.OutputFolder.OutputFolderFrameDNNDarknet);
+            cleanFolder(Config.OutputFolder.OutputFolderFrameDNNTF);
+            cleanFolder(Config.OutputFolder.OutputFolderFrameDNNONNX);
+        }
+
         public static byte[] ImageToByteBmp(Image imageIn)
         {
             using (var ms = new MemoryStream())
@@ -39,10 +51,16 @@ namespace Utils
 
         public static float checkLineBboxOverlapRatio(int[] line, int bbox_x, int bbox_y, int bbox_w, int bbox_h)
         {
+            (Point p1, Point p2) newLine = (new Point(line[0], line[1]), new Point(line[2], line[3]));
+            return checkLineBboxOverlapRatio(newLine, bbox_x, bbox_y, bbox_w, bbox_h);
+        }
+
+        public static float checkLineBboxOverlapRatio((Point p1, Point p2) line, int bbox_x, int bbox_y, int bbox_w, int bbox_h)
+        {
             float overlapRatio = 0.0F;
             int insidePixels = 0;
 
-            IEnumerable<Point> linePixels = EnumerateLineNoDiagonalSteps(line[0], line[1], line[2], line[3]);
+            IEnumerable<Point> linePixels = EnumerateLineNoDiagonalSteps(line.p1, line.p2);
             
             foreach(Point pixel in linePixels)
             {
@@ -56,17 +74,17 @@ namespace Utils
             return overlapRatio;
         }
 
-        private static IEnumerable<Point> EnumerateLineNoDiagonalSteps(int x0, int y0, int x1, int y1)
+        private static IEnumerable<Point> EnumerateLineNoDiagonalSteps(Point p0, Point p1)
         {
-            int dx = Math.Abs(x1 - x0), sx = x0 < x1 ? 1 : -1;
-            int dy = -Math.Abs(y1 - y0), sy = y0 < y1 ? 1 : -1;
+            int dx = Math.Abs(p1.X - p0.X), sx = p0.X < p1.X ? 1 : -1;
+            int dy = -Math.Abs(p1.Y - p0.Y), sy = p0.Y < p1.Y ? 1 : -1;
             int err = dx + dy, e2;
 
             while (true)
             {
-                yield return new Point(x0, y0);
+                yield return p0;
 
-                if (x0 == x1 && y0 == y1) break;
+                if (p0.X == p1.X && p0.Y == p1.Y) break;
 
                 e2 = 2 * err;
 
@@ -74,12 +92,12 @@ namespace Utils
                 if (e2 > dy)
                 {
                     err += dy;
-                    x0 += sx;
+                    p0.X += sx;
                 }
                 else if (e2 < dx)
                 { // <--- this "else" makes the difference
                     err += dx;
-                    y0 += sy;
+                    p0.Y += sy;
                 }
             }
         }
@@ -118,6 +136,28 @@ namespace Utils
                     return memoryStream2.ToArray();
                 }
             }
+        }
+
+        public static List<Tuple<string, int[]>> ConvertLines(List<(string key, (Point p1, Point p2) coordinates)> lines)
+        {
+            List<Tuple<string, int[]>> newLines = new List<Tuple<string, int[]>>();
+            foreach ((string key, (Point p1, Point p2) coordinates) line in lines)
+            {
+                int[] coor = new int[] { line.coordinates.p1.X, line.coordinates.p1.Y, line.coordinates.p2.X, line.coordinates.p2.Y };
+                Tuple<string, int[]> newLine = new Tuple<string, int[]>(line.key, coor);
+                newLines.Add(newLine);
+            }
+            return newLines;
+        }
+
+        public static Dictionary<string, int> CatHashSet2Dict(HashSet<string> cat)
+        {
+            Dictionary<string, int> catDict = new Dictionary<string, int>();
+            foreach (string c in cat)
+            {
+                catDict.Add(c, 0);
+            }
+            return catDict;
         }
     }
 }

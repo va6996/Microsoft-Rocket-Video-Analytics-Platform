@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿namespace Utils.Config
+namespace Utils.Config
 {
     public static class OutputFolder
     {
@@ -17,8 +17,8 @@
 
         public static string OutputFolderAML { get; set; } = OutputFolderRoot + "output_aml/";
 
-        public static string OutputFolderFrameDNNDarknet { get; set; } = OutputFolderRoot + "output_framednndarknet/";
-
         public static string OutputFolderFrameDNNTF { get; set; } = OutputFolderRoot + "output_framednntf/";
+
+        public static string OutputFolderFrameDNNONNX { get; set; } = OutputFolderRoot + "output_framednnonnx/";
     }
 }
