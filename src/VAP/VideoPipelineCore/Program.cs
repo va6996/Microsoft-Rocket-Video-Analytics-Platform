@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
+using FramePreProcessor;
 using TFDetector;
 using Utils.Config;
 
@@ -133,12 +134,20 @@ namespace VideoPipelineCore
                 //background subtractor
                 Mat fgmask = null;
                 List<Box> foregroundBoxes = bgs.DetectObjects(DateTime.Now, frame, frameIndex, out fgmask);
+                if (foregroundBoxes != null && foregroundBoxes.Count > 0)
+                {
+                    Console.WriteLine("boxes deteceted: {0}", foregroundBoxes.Count);
+                }
                 
 
                 //line detector
                 if (new int[] { 0, 4, 5, 6 }.Contains(pplConfig))
                 {
                     occupancy = lineDetector.updateLineOccupancy(frame, frameIndex, fgmask, foregroundBoxes);
+                    foreach (var kv in occupancy)
+                    {
+                        // Console.WriteLine("Line Detector: Key {0} Value {1}", kv.Key, kv.Value);
+                    }
                 }
 
 
@@ -147,6 +156,18 @@ namespace VideoPipelineCore
                 {
                     ltDNNItemListTF = ltDNNTF.Run(frame, frameIndex, occupancy, lines, category);
                     ItemList = ltDNNItemListTF;
+                    if (ltDNNItemListTF != null)
+                    {
+                        // foreach (var kv in ltDNNItemListTF)
+                        // {
+                        //     if (kv != null)
+                        //     {
+                                Console.WriteLine("cheap DNN: Key {0}", ltDNNItemListTF.Count);
+                        //     }
+                        //
+                        // }
+                    }
+                    
                 }
 
 
@@ -155,6 +176,10 @@ namespace VideoPipelineCore
                 {
                     frameDNNTFItemList = frameDNNTF.Run(frame, frameIndex, category, System.Drawing.Brushes.Pink, 0.2);
                     ItemList = frameDNNTFItemList;
+                    if (frameDNNTFItemList != null)
+                    {
+                        Console.WriteLine("frame DNN: Key {0}", frameDNNTFItemList.Count);
+                    }
                 }
 
 
@@ -180,6 +205,7 @@ namespace VideoPipelineCore
                     Dictionary<string, string> kvpairs = new Dictionary<string, string>();
                     foreach (Item it in ItemList)
                     {
+                        Console.WriteLine("Found {0}", it.TriggerLine);
                         if (!kvpairs.ContainsKey(it.TriggerLine))
                             kvpairs.Add(it.TriggerLine, "1");
                     }
@@ -190,11 +216,16 @@ namespace VideoPipelineCore
                 //print out stats
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / (DateTime.Now - startTime).TotalMilliseconds;
-                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - startTime).TotalMilliseconds);
+                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - prevTime).TotalMilliseconds);
 		        prevTime = DateTime.Now;
             }
 
-            Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
+            foreach (var pair in FramePreProcessor.FrameDisplay.displayKVpairs)
+            {
+                Console.WriteLine("{0}: {1}", pair.Key, pair.Value);
+            }
+
+            // Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
             Console.WriteLine("Done!");
         }
     }
