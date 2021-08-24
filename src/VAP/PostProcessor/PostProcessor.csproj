@@ -10,6 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\DNNDetector\DNNDetector.csproj" />
     <ProjectReference Include="..\DarknetDetector\DarknetDetector.csproj" />
   </ItemGroup>
 

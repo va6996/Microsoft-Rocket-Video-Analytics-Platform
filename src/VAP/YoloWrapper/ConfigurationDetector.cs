@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿using System.IO;
+ using System.IO;
 using System.Linq;
 
 namespace Wrapper.Yolo

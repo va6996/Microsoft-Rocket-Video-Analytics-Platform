@@ -31,6 +31,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LineDetector", "LineDetecto
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ORTWrapper", "ORTWrapper\ORTWrapper.csproj", "{4B1EBDD7-928E-4B7E-A468-C258FF4BC325}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DarknetDetector", "DarknetDetector\DarknetDetector.csproj", "{C1D8D701-208C-4C7B-A310-D846C767E544}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,11 +91,19 @@ Global
 		{4B1EBDD7-928E-4B7E-A468-C258FF4BC325}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4B1EBDD7-928E-4B7E-A468-C258FF4BC325}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4B1EBDD7-928E-4B7E-A468-C258FF4BC325}.Release|Any CPU.Build.0 = Release|Any CPU
+		{992D9B38-FCC1-406A-92A2-6C1B5A310CCF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{992D9B38-FCC1-406A-92A2-6C1B5A310CCF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1D8D701-208C-4C7B-A310-D846C767E544}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C1D8D701-208C-4C7B-A310-D846C767E544}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C1D8D701-208C-4C7B-A310-D846C767E544}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C1D8D701-208C-4C7B-A310-D846C767E544}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C2C42C4B-0299-4564-8F61-EA076D28C395}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal

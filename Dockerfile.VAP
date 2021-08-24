@@ -10,6 +10,8 @@ COPY ./src/VAP/AML.Client/*.csproj ./src/VAP/AML.Client/
 COPY ./src/VAP/AML.tfserving/*.csproj ./src/VAP/AML.tfserving/
 COPY ./src/VAP/BGSObjectDetector/*.csproj ./src/VAP/BGSObjectDetector/
 COPY ./src/VAP/Decoder/*.csproj ./src/VAP/Decoder/
+COPY ./src/VAP/ORTWrapper/*.csproj ./src/VAP/ORTWrapper/
+COPY ./src/VAP/DarknetDetector/*.csproj ./src/VAP/DarknetDetector/
 COPY ./src/VAP/DNNDetector/ ./src/VAP/DNNDetector/
 COPY ./src/VAP/FramePreProcessor/*.csproj ./src/VAP/FramePreProcessor/
 COPY ./src/VAP/LineDetector/*.csproj ./src/VAP/LineDetector/
@@ -18,6 +20,7 @@ COPY ./src/VAP/TFDetector/*.csproj ./src/VAP/TFDetector/
 COPY ./src/VAP/TFWrapper/*.csproj ./src/VAP/TFWrapper/
 COPY ./src/VAP/Utils/*.csproj ./src/VAP/Utils/
 COPY ./src/VAP/VideoPipelineCore/*.csproj ./src/VAP/VideoPipelineCore/
+COPY ./src/VAP/YoloWrapper/*.csproj ./src/VAP/YoloWrapper/
 RUN dotnet restore ./src/VAP/AML.tfserving/
 RUN dotnet restore ./src/VAP/AML.Client/
 RUN dotnet restore ./src/VAP/BGSObjectDetector/
@@ -37,6 +40,8 @@ COPY ./src/VAP/AML.tfserving/ ./src/VAP/AML.tfserving/
 COPY ./src/VAP/BGSObjectDetector/ ./src/VAP/BGSObjectDetector/
 COPY ./src/VAP/Decoder/ ./src/VAP/Decoder/
 COPY ./src/VAP/DNNDetector/ ./src/VAP/DNNDetector/
+COPY ./src/VAP/ORTWrapper/ ./src/VAP/ORTWrapper/
+COPY ./src/VAP/DarknetDetector/ ./src/VAP/DarknetDetector/
 COPY ./src/VAP/FramePreProcessor/ ./src/VAP/FramePreProcessor/
 COPY ./src/VAP/LineDetector/ ./src/VAP/LineDetector/
 COPY ./src/VAP/PostProcessor/ ./src/VAP/PostProcessor/
@@ -44,7 +49,9 @@ COPY ./src/VAP/TFDetector/ ./src/VAP/TFDetector/
 COPY ./src/VAP/TFWrapper/ ./src/VAP/TFWrapper/
 COPY ./src/VAP/Utils/ ./src/VAP/Utils/
 COPY ./src/VAP/VideoPipelineCore/ ./src/VAP/VideoPipelineCore/
+COPY ./src/VAP/YoloWrapper/ ./src/VAP/YoloWrapper/
 COPY ./cfg/imagenet-classes.json ./cfg/imagenet-classes.json
+
 RUN dotnet publish ./src/VAP/Utils/ -c Release -o out
 RUN dotnet publish ./src/VAP/TFWrapper/ -c Release -o out
 RUN dotnet publish ./src/VAP/DNNDetector/ -c Release -o out
@@ -57,6 +64,9 @@ RUN dotnet publish ./src/VAP/AML.Client/ -c Release -o out
 RUN dotnet publish ./src/VAP/PostProcessor/ -c Release -o out
 RUN dotnet publish ./src/VAP/LineDetector/ -c Release -o out
 RUN dotnet publish ./src/VAP/VideoPipelineCore/ -c Release -o out
+RUN dotnet publish ./src/VAP/ORTWrapper/ -c Release -o out
+RUN dotnet publish ./src/VAP/DarknetDetector/ -c Release -o out
+RUN dotnet publish ./src/VAP/YoloWrapper/ -c Release -o out
 
 # Build runtime image
 FROM ycshu086/ubuntu-dotnetcore-opencv-opencvsharp-cuda-cudnn:0.1
@@ -73,6 +83,9 @@ COPY --from=build-env /app/src/VAP/LineDetector/out .
 COPY --from=build-env /app/src/VAP/FramePreProcessor/out .
 COPY --from=build-env /app/src/VAP/AML.Client/out .
 COPY --from=build-env /app/src/VAP/VideoPipelineCore/out .
+COPY --from=build-env /app/src/VAP/ORTWrapper/out .
+COPY --from=build-env /app/src/VAP/DarknetDetector/out .
+COPY --from=build-env /app/src/VAP/YoloWrapper/out .
 COPY ./cfg ./cfg
 COPY ./media ./media
 COPY ./src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow.so /usr/local/lib

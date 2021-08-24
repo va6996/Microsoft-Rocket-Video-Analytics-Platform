@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿namespace Wrapper.Yolo
+ namespace Wrapper.Yolo
 {
     public enum DNNMode
     {

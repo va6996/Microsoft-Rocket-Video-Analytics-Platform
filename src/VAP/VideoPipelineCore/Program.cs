@@ -16,6 +16,7 @@ using System.Configuration;
 using System.Linq;
 using FramePreProcessor;
 using TFDetector;
+using Wrapper.Yolo;
 
 namespace VideoPipelineCore
 {
@@ -72,6 +73,14 @@ namespace VideoPipelineCore
             Dictionary<string, bool> occupancy = null;
             List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
 
+            //-----LineTriggeredDNN (Darknet)-----
+            LineTriggeredDNNDarknet ltDNNDarknet = null;
+            List<Item> ltDNNItemListDarknet = null;
+            if (new int[] { 3, 4 }.Contains(pplConfig))
+            {
+                ltDNNDarknet = new LineTriggeredDNNDarknet(lines);
+                ltDNNItemListDarknet = new List<Item>();
+            }
             //-----LineTriggeredDNN (TensorFlow)-----
             LineTriggeredDNNTF ltDNNTF = null;
             List<Item> ltDNNItemListTF = null;
@@ -131,7 +140,7 @@ namespace VideoPipelineCore
             List<Item> frameDNNONNXItemList = null;
             if (new int[] { 8 }.Contains(pplConfig))
             {
-                frameDNNOnnxYolo = new FrameDNNOnnxYolo(Utils.Utils.ConvertLines(lines), "yolov3", Wrapper.ORT.DNNMode.Frame);
+                frameDNNOnnxYolo = new FrameDNNOnnxYolo(null, "yolov3", Wrapper.ORT.DNNMode.Frame);
                 frameDNNONNXItemList = new List<Item>();
             }
 
@@ -288,7 +297,7 @@ namespace VideoPipelineCore
                 //print out stats
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / (DateTime.Now - startTime).TotalMilliseconds;
-                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - startTime).TotalMilliseconds);
+                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - prevTime).TotalMilliseconds);
 		        prevTime = DateTime.Now;
             }
 

@@ -20,5 +20,7 @@ namespace Utils.Config
         public static string OutputFolderFrameDNNTF { get; set; } = OutputFolderRoot + "output_framednntf/";
 
         public static string OutputFolderFrameDNNONNX { get; set; } = OutputFolderRoot + "output_framednnonnx/";
+        
+        public static string OutputFolderFrameDNNDarknet { get; set; } = OutputFolderRoot + "output_framednndarknet/";
     }
 }

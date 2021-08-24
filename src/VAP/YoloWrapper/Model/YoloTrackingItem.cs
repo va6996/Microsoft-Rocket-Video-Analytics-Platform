@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿namespace Wrapper.Yolo.Model
+ namespace Wrapper.Yolo.Model
 {
     public class YoloTrackingItem : YoloItem
     {
