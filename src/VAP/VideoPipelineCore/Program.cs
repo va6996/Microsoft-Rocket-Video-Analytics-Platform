@@ -39,14 +39,15 @@ namespace VideoPipelineCore
             else
             {
                 isVideoStream = false;
-                videoUrl = @"..\..\..\..\..\..\media\" + args[0];
+                videoUrl = @"..\..\..\..\..\..\media\" + args[1];
             }
-            string lineFile = @"..\..\..\..\..\..\cfg\" + args[1];
-            int SAMPLING_FACTOR = int.Parse(args[2]);
-            double RESOLUTION_FACTOR = double.Parse(args[3]);
+            string lineFile = @"..\..\..\..\..\..\cfg\" + args[2];
+            Console.WriteLine(args[3]);
+            int SAMPLING_FACTOR = int.Parse(args[3]);
+            double RESOLUTION_FACTOR = double.Parse(args[4]);
 
             HashSet<string> category = new HashSet<string>();
-            for (int i = 4; i < args.Length; i++)
+            for (int i = 5; i < args.Length; i++)
             {
                 category.Add(args[i]);
             }
@@ -288,12 +289,12 @@ namespace VideoPipelineCore
                 //print out stats
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / (DateTime.Now - startTime).TotalMilliseconds;
-                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - startTime).TotalMilliseconds);
+                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - prevTime).TotalMilliseconds);
 		        prevTime = DateTime.Now;
             }
 
-            Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
-            Console.WriteLine("Done!");
+            // Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
+            // Console.WriteLine("Done!");
         }
     }
 }
