@@ -27,7 +27,7 @@ namespace DNNDetector
         public FrameDNNOnnxYolo(List<Tuple<string, int[]>> lines, string modelName, DNNMode mode)
         {
             _lines = lines;
-            onnxWrapper = new ORTWrapper($@"..\..\..\..\..\..\modelOnnx\{modelName}ort.onnx", mode);
+            onnxWrapper = new ORTWrapper($@"modelOnnx/{modelName}ort.onnx", mode);
         }
 
         public List<Item> Run(Mat frameOnnx, int frameIndex, Dictionary<string, int> category, Brush bboxColor, int lineID, double min_score_for_linebbox_overlap, bool savePictures = false)

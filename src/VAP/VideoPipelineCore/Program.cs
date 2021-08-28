@@ -39,9 +39,9 @@ namespace VideoPipelineCore
             else
             {
                 isVideoStream = false;
-                videoUrl = @"..\..\..\..\..\..\media\" + args[1];
+                videoUrl = @"media/" + args[1];
             }
-            string lineFile = @"..\..\..\..\..\..\cfg\" + args[2];
+            string lineFile = @"cfg/" + args[2];
             Console.WriteLine(args[3]);
             int SAMPLING_FACTOR = int.Parse(args[3]);
             double RESOLUTION_FACTOR = double.Parse(args[4]);

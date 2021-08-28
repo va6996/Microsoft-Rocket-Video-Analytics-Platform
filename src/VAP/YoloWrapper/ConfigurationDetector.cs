@@ -31,7 +31,7 @@ namespace Wrapper.Yolo
 
         private string[] GetYoloFiles()
         {            
-            return Directory.GetFiles(@"../../../../YoloWrapper/Yolo.Config/"+configFolder, "*.*", SearchOption.TopDirectoryOnly).Where(o => o.EndsWith(".names") || o.EndsWith(".cfg") || o.EndsWith(".weights")).ToArray();
+            return Directory.GetFiles(@"src/VAP/YoloWrapper/Yolo.Config/"+configFolder, "*.*", SearchOption.TopDirectoryOnly).Where(o => o.EndsWith(".names") || o.EndsWith(".cfg") || o.EndsWith(".weights")).ToArray();
             //return Directory.GetFiles(@"D:\Projects\McD\src\VAP\YoloWrapper\Yolo.Config\" + configFolder, "*.*", SearchOption.TopDirectoryOnly).Where(o => o.EndsWith(".names") || o.EndsWith(".cfg") || o.EndsWith(".weights")).ToArray();
         }
 
