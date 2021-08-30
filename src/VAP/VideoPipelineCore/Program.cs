@@ -55,7 +55,7 @@ namespace VideoPipelineCore
             //initialize pipeline settings
             int pplConfig = Convert.ToInt16(ConfigurationManager.AppSettings["PplConfig"]);
             bool loop = false;
-            bool displayRawVideo = true;
+            bool displayRawVideo = false;
             bool displayBGSVideo = false;
             Utils.Utils.cleanFolderAll();
 
