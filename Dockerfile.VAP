@@ -98,7 +98,7 @@ COPY ./src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/l
 COPY ./src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow_framework.so .
 RUN cp /opencvsharp/make/OpenCvSharpExtern/libOpenCvSharpExtern.so /usr/local/lib
 RUN cp /opencvsharp/make/OpenCvSharpExtern/libOpenCvSharpExtern.so .
-RUN apt-get update && apt-get install -y --no-install-recommends apt-utils && apt-get install -y libgdiplus
+RUN apt-get update && apt-get install -y libgdiplus
 RUN cd /usr/lib
 RUN ln -s libgdiplus.so gdiplus.dll
 RUN export LD_LIBRARY_PATH="/lib:/usr/lib:/usr/local/lib"
