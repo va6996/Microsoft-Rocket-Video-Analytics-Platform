@@ -1,7 +1,7 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿using System;
+using System;
 using System.Drawing;
 
 namespace DNNDetector.Model
@@ -48,6 +48,17 @@ namespace DNNDetector.Model
             this.Confidence = onnxYoloItem.Confidence;
             this.TriggerLineID = onnxYoloItem.TriggerLineID;
             this.TriggerLine = onnxYoloItem.TriggerLine;
+        }
+        
+        public Item(int x, int y, int width, int height, int catId, string catName, double confidence)
+        {
+            this.X = x;
+            this.Y = y;
+            this.Width = width;
+            this.Height = height;
+            this.ObjId = catId;
+            this.ObjName = catName;
+            this.Confidence = confidence;
         }
 
         public Point Center()

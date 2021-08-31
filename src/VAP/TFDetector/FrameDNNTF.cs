@@ -62,6 +62,15 @@ namespace TFDetector
                     }
                 }
             }
+            else
+            {
+                foreach (var item in preValidItems)
+                {
+                    Console.WriteLine("Detection: {0}", item.ObjName);
+                    validObjects.Add(item);
+                    _index++;
+                }
+            }
 
             // output tf results
             if (saveImg)
@@ -128,17 +137,28 @@ namespace TFDetector
                         bbox_w = (int)((xmax - xmin) * _imageWidth), bbox_h = (int)((ymax - ymin) * _imageHeight);
                     
                     //check line overlap
-                    for (int lineID = 0; lineID < _lines.Count; lineID++)
+                    if (_lines != null)
                     {
-                        float ratio = Utils.Utils.checkLineBboxOverlapRatio(_lines[lineID].coordinates, bbox_x, bbox_y, bbox_w, bbox_h);
-                        if (ratio >= DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL)
+                        for (int lineID = 0; lineID < _lines.Count; lineID++)
                         {
-                            Item it = new Item(bbox_x, bbox_y, bbox_w, bbox_h, catalogItem.Id, catalogItem.DisplayName, scores[i, j], lineID, _lines[lineID].key);
-                            it.TaggedImageData = Utils.Utils.DrawImage(imageByteArray, bbox_x, bbox_y, bbox_w, bbox_h, bboxColor);
-                            it.CroppedImageData = Utils.Utils.CropImage(imageByteArray, bbox_x, bbox_y, bbox_w, bbox_h);
-                            frameDNNItem.Add(it);
-                            break;
+                            float ratio = Utils.Utils.checkLineBboxOverlapRatio(_lines[lineID].coordinates, bbox_x, bbox_y, bbox_w, bbox_h);
+                            if (ratio >= DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL)
+                            {
+                                Item it = new Item(bbox_x, bbox_y, bbox_w, bbox_h, catalogItem.Id, catalogItem.DisplayName, scores[i, j], lineID, _lines[lineID].key);
+                                it.TaggedImageData = Utils.Utils.DrawImage(imageByteArray, bbox_x, bbox_y, bbox_w, bbox_h, bboxColor);
+                                it.CroppedImageData = Utils.Utils.CropImage(imageByteArray, bbox_x, bbox_y, bbox_w, bbox_h);
+                                frameDNNItem.Add(it);
+                                break;
+                            }
                         }
+                    }
+                    else
+                    {
+                        Item it = new Item(bbox_x, bbox_y, bbox_w, bbox_h, catalogItem.Id, catalogItem.DisplayName, scores[i, j]);
+                        it.TaggedImageData = Utils.Utils.DrawImage(imageByteArray, bbox_x, bbox_y, bbox_w, bbox_h, bboxColor);
+                        it.CroppedImageData = Utils.Utils.CropImage(imageByteArray, bbox_x, bbox_y, bbox_w, bbox_h);
+                        frameDNNItem.Add(it);
+                        break;
                     }
                 }
             }

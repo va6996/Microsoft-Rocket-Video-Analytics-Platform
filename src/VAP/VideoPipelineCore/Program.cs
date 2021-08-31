@@ -71,7 +71,8 @@ namespace VideoPipelineCore
             Detector lineDetector = new Detector(SAMPLING_FACTOR, RESOLUTION_FACTOR, lineFile, displayBGSVideo);
             Dictionary<string, int> counts = null;
             Dictionary<string, bool> occupancy = null;
-            List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
+            // List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
+            List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = null;
 
             //-----LineTriggeredDNN (Darknet)-----
             LineTriggeredDNNDarknet ltDNNDarknet = null;
@@ -123,7 +124,7 @@ namespace VideoPipelineCore
             List<Item> frameDNNDarknetItemList = null;
             if (new int[] { 1 }.Contains(pplConfig))
             {
-                frameDNNDarknet = new FrameDNNDarknet("YoloV3TinyCoco", Wrapper.Yolo.DNNMode.Frame, lines);
+                frameDNNDarknet = new FrameDNNDarknet("YoloV3TinyCoco", Wrapper.Yolo.DNNMode.Frame, null);
                 frameDNNDarknetItemList = new List<Item>();
             }
 
@@ -132,7 +133,7 @@ namespace VideoPipelineCore
             List<Item> frameDNNTFItemList = null;
             if (new int[] { 2 }.Contains(pplConfig))
             {
-                frameDNNTF = new FrameDNNTF(lines);
+                frameDNNTF = new FrameDNNTF(null);
                 frameDNNTFItemList = new List<Item>();
             }
 
@@ -274,7 +275,7 @@ namespace VideoPipelineCore
 
 
                 //display counts
-                if (ItemList != null)
+                if (ItemList != null && lines != null)
                 {
                     Dictionary<string, string> kvpairs = new Dictionary<string, string>();
                     foreach (Item it in ItemList)
