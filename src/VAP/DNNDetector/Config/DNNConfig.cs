@@ -1,11 +1,11 @@
 // Copyright (c) Microsoft Corporation.
 // Licensed under the MIT license.
 
-﻿namespace DNNDetector.Config
+namespace DNNDetector.Config
 {
     public static class DNNConfig
     {
-        public static double CONFIDENCE_THRESHOLD { get; set; } = 0.7; //threshold for calling heavy DNN
+        public static double CONFIDENCE_THRESHOLD { get; set; } = 1.7; //threshold for calling heavy DNN
 
         public static int FRAME_SEARCH_RANGE { get; set; } = 50; // frames
 

@@ -12,27 +12,27 @@
   <ItemGroup>
     <ContentWithTargetPath Include="Dependencies\opencv_world340d.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>x64\opencv_world340d.dll</TargetPath>
+      <TargetPath>libx64\opencv_world340d.dll</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Dependencies\opencv_world340.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>x64\opencv_world340.dll</TargetPath>
+      <TargetPath>libx64\opencv_world340.dll</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Dependencies\yolo_cpp_dll_gpu_cc.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>x64\yolo_cpp_dll_gpu_cc.dll</TargetPath>
+      <TargetPath>libx64\yolo_cpp_dll_gpu_cc.dll</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Dependencies\yolo_cpp_dll_gpu_lt.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>x64\yolo_cpp_dll_gpu_lt.dll</TargetPath>
+      <TargetPath>libx64\yolo_cpp_dll_gpu_lt.dll</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Dependencies\yolo_cpp_dll_cpu.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>x64\yolo_cpp_dll_cpu.dll</TargetPath>
+      <TargetPath>libx64\yolo_cpp_dll_cpu.dll</TargetPath>
     </ContentWithTargetPath>
     <ContentWithTargetPath Include="Dependencies\pthreadVC2.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>x64\pthreadVC2.dll</TargetPath>
+      <TargetPath>libx64\pthreadVC2.dll</TargetPath>
     </ContentWithTargetPath>
   </ItemGroup>
 

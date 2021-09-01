@@ -73,7 +73,8 @@ namespace VideoPipelineCore
             Dictionary<string, bool> occupancy = null;
             // List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
             List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = null;
-
+            List<Tuple<string, int[]>> convLines = lines == null ? null : Utils.Utils.ConvertLines(lines);
+            
             //-----LineTriggeredDNN (Darknet)-----
             LineTriggeredDNNDarknet ltDNNDarknet = null;
             List<Item> ltDNNItemListDarknet = null;
@@ -97,7 +98,7 @@ namespace VideoPipelineCore
             List<Item> ltDNNItemListOnnx = null;
             if (new int[] { 7 }.Contains(pplConfig))
             {
-                ltDNNOnnx = new LineTriggeredDNNORTYolo(Utils.Utils.ConvertLines(lines), "yolov3tiny");
+                ltDNNOnnx = new LineTriggeredDNNORTYolo(convLines, "yolov3tiny");
                 ltDNNItemListOnnx = new List<Item>();
             }
 
@@ -115,7 +116,8 @@ namespace VideoPipelineCore
             List<Item> ccDNNItemListOnnx = null;
             if (new int[] { 7 }.Contains(pplConfig))
             {
-                ccDNNOnnx = new CascadedDNNORTYolo(Utils.Utils.ConvertLines(lines), "yolov3");
+                
+                ccDNNOnnx = new CascadedDNNORTYolo(convLines, "yolov3");
                 ccDNNItemListOnnx = new List<Item>();
             }
 
@@ -142,7 +144,7 @@ namespace VideoPipelineCore
             List<Item> frameDNNONNXItemList = null;
             if (new int[] { 8 }.Contains(pplConfig))
             {
-                frameDNNOnnxYolo = new FrameDNNOnnxYolo(Utils.Utils.ConvertLines(lines), "yolov3", Wrapper.ORT.DNNMode.Frame);
+                frameDNNOnnxYolo = new FrameDNNOnnxYolo(convLines, "yolov3", Wrapper.ORT.DNNMode.Frame);
                 frameDNNONNXItemList = new List<Item>();
             }
 
@@ -170,6 +172,7 @@ namespace VideoPipelineCore
             //RUN PIPELINE 
             DateTime startTime = DateTime.Now;
             DateTime prevTime = DateTime.Now;
+            List<string> latencies = new List<string>();
             while (true)
             {
                 if (!loop)
@@ -216,7 +219,7 @@ namespace VideoPipelineCore
                 }
                 else if (new int[] { 7 }.Contains(pplConfig))
                 {
-                    ltDNNItemListOnnx = ltDNNOnnx.Run(frame, frameIndex, counts, Utils.Utils.ConvertLines(lines), Utils.Utils.CatHashSet2Dict(category), ref teleCountsCheapDNN, true);
+                    ltDNNItemListOnnx = ltDNNOnnx.Run(frame, frameIndex, counts, convLines, Utils.Utils.CatHashSet2Dict(category), ref teleCountsCheapDNN, true);
                     ItemList = ltDNNItemListOnnx;
                 }
 
@@ -229,7 +232,7 @@ namespace VideoPipelineCore
                 }
                 else if (new int[] { 7 }.Contains(pplConfig))
                 {
-                    ccDNNItemListOnnx = ccDNNOnnx.Run(frameIndex, ItemList, Utils.Utils.ConvertLines(lines), Utils.Utils.CatHashSet2Dict(category), ref teleCountsHeavyDNN, true);
+                    ccDNNItemListOnnx = ccDNNOnnx.Run(frameIndex, ItemList, convLines, Utils.Utils.CatHashSet2Dict(category), ref teleCountsHeavyDNN, true);
                     ItemList = ccDNNItemListOnnx;
                 }
 
@@ -275,13 +278,14 @@ namespace VideoPipelineCore
 
 
                 //display counts
-                if (ItemList != null && lines != null)
+                if (ItemList != null)
                 {
                     Dictionary<string, string> kvpairs = new Dictionary<string, string>();
                     foreach (Item it in ItemList)
                     {
-                        if (!kvpairs.ContainsKey(it.TriggerLine))
+                        if (lines != null && !kvpairs.ContainsKey(it.TriggerLine))
                             kvpairs.Add(it.TriggerLine, "1");
+                        Console.WriteLine("Detected: {0}", it.ObjName);
                     }
                     FramePreProcessor.FrameDisplay.updateKVPairs(kvpairs);
                 }
@@ -289,13 +293,18 @@ namespace VideoPipelineCore
 
                 //print out stats
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
-                double avgFps = 1000 * (long)frameIndex / (DateTime.Now - startTime).TotalMilliseconds;
-                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, (DateTime.Now - prevTime).TotalMilliseconds);
+                double latency = (DateTime.Now - prevTime).TotalMilliseconds;
+                double avgFps = 1000 * (long)frameIndex / latency;
+                latencies.Add(latency.ToString());
+                Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
             }
 
             // Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
             // Console.WriteLine("Done!");
+            string detectionRes = "[" + String.Join(", ", FrameDNNOnnxYolo.finalResults) + "]";
+            Console.WriteLine("Latencies: {0}", String.Join(", ", latencies));
+            Console.WriteLine("Detections: {0}", detectionRes);
         }
     }
 }

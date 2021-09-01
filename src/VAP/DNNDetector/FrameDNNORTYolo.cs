@@ -20,6 +20,7 @@ namespace DNNDetector
         private static int _imageWidth, _imageHeight, _index;
         private static List<Tuple<string, int[]>> _lines;
         private static Dictionary<string, int> _category;
+        public static List<string> finalResults = new List<string>();
 
         ORTWrapper onnxWrapper;
         byte[] imageByteArray;
@@ -41,6 +42,8 @@ namespace DNNDetector
                     OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx),
                     _imageHeight,
                     _imageWidth);
+
+            List<string> resString = new List<string>();
 
             List<Item> preValidItems = new List<Item>();
             foreach (ORTItem bbox in boundingBoxes)
@@ -66,7 +69,7 @@ namespace DNNDetector
                     _index++;
                 }
             }
-            else if (min_score_for_linebbox_overlap == 0.0) //frameDNN object detection
+            else //if (min_score_for_linebbox_overlap == 0.0) //frameDNN object detection
             {
                 var overlapItems = preValidItems.Select(o => new { Bbox_x = o.X + o.Width, Bbox_y = o.Y + o.Height, Item = o })
                     .Where(o => o.Bbox_x <= _imageWidth && o.Bbox_y <= _imageHeight && _category.ContainsKey(o.Item.ObjName));
@@ -79,6 +82,8 @@ namespace DNNDetector
                     item.Item.TriggerLineID = -1;
                     item.Item.Model = "FrameDNN";
                     validObjects.Add(item.Item);
+                    resString.Add("'" + item.Item.ObjName + "'");
+
                     _index++;
                 }
             }
@@ -98,7 +103,10 @@ namespace DNNDetector
                 //byte[] imgBboxes = DrawAllBb(frameIndex, Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx)),
                 //        validObjects, Brushes.Pink);
             }
-
+            string res = "[" + String.Join(", ", resString) + "]";
+            finalResults.Add(res);
+            Console.WriteLine("Detection: {0}", res);
+            
             return (validObjects.Count == 0 ? null : validObjects);
         }
 

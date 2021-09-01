@@ -15,6 +15,7 @@ namespace DNNDetector
     public class CascadedDNNORTYolo
     {
         FrameDNNOnnxYolo frameDNNOnnxYolo;
+        public static List<string> finalResults = new List<string>();
 
         public CascadedDNNORTYolo(List<Tuple<string, int[]>> lines, string modelName)
         {
@@ -31,6 +32,7 @@ namespace DNNDetector
             }
 
             List<Item> ccDNNItem = new List<Item>();
+            List<string> resString = new List<string>();
 
             foreach (Item ltDNNItem in ltDNNItemList)
             {
@@ -57,6 +59,8 @@ namespace DNNDetector
                             item.TriggerLineID = ltDNNItem.TriggerLineID;
                             item.Model = "Heavy";
                             ccDNNItem.Add(item);
+                            resString.Add("'" + item.ObjName + "'");
+                            
 
                             // output heavy YOLO results
                             if (savePictures)
@@ -76,6 +80,10 @@ namespace DNNDetector
                     }
                 }
             }
+            
+            string res = "[" + String.Join(", ", resString) + "]";
+            finalResults.Add(res);
+            Console.WriteLine("Detection: {0}", res);
 
             return ccDNNItem;
         }
