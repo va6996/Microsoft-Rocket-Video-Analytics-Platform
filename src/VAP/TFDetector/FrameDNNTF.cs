@@ -21,6 +21,7 @@ namespace TFDetector
         private static int _imageWidth, _imageHeight, _index;
         private static List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> _lines;
         private static HashSet<string> _category;
+        public static List<string> finalResults = new List<string>();
 
         TFWrapper tfWrapper = new TFWrapper();
         byte[] imageByteArray;
@@ -45,7 +46,6 @@ namespace TFDetector
             List<Item> preValidItems = ValidateItems(boxes, scores, classes, DNNConfig.MIN_SCORE_FOR_TFOBJECT_OUTPUT);
             List<Item> validObjects = new List<Item>();
 
-            //run overlap ratio-based validation
             if (_lines != null)
             {
                 for (int lineID = 0; lineID < _lines.Count; lineID++)
@@ -62,15 +62,32 @@ namespace TFDetector
                     }
                 }
             }
-            else
+            else 
             {
+                List<string> resString = new List<string>();
+                
                 foreach (var item in preValidItems)
                 {
-                    Console.WriteLine("Detection: {0}", item.ObjName);
+                    
                     validObjects.Add(item);
+                    resString.Add("'" + item.ObjName + "'");
                     _index++;
                 }
+
+                if (resString.Count > 0)
+                {
+                    string res = "[" + String.Join(", ", resString) + "]";
+                    finalResults.Add(res);
+                    Console.WriteLine("Detection: {0}", res);
+                }
+                else
+                {
+                    finalResults.Add("[]");
+                }
+                
             }
+
+            //run overlap ratio-based validation
 
             // output tf results
             if (saveImg)
