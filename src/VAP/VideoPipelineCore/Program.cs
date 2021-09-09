@@ -303,8 +303,10 @@ namespace VideoPipelineCore
             // Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
             // Console.WriteLine("Done!");
             string detectionRes = "[" + String.Join(", ", FrameDNNOnnxYolo.finalResults) + "]";
+            string detectionRes1 = "[" + String.Join(", ", FrameDNNOnnxYolo.finalResults) + "]";
             Console.WriteLine("Latencies: {0}", String.Join(", ", latencies));
             Console.WriteLine("Detections: {0}", detectionRes);
+            Console.WriteLine("Detections: {0}", detectionRes1);
         }
     }
 }
