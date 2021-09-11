@@ -20,7 +20,7 @@ namespace DNNDetector
         private static int _imageWidth, _imageHeight, _index;
         private static List<Tuple<string, int[]>> _lines;
         private static Dictionary<string, int> _category;
-        public static List<string> finalResults = new List<string>();
+        public static List<List<string>> finalResults = new List<List<string>>();
 
         ORTWrapper onnxWrapper;
         byte[] imageByteArray;
@@ -82,7 +82,7 @@ namespace DNNDetector
                     item.Item.TriggerLineID = -1;
                     item.Item.Model = "FrameDNN";
                     validObjects.Add(item.Item);
-                    resString.Add("'" + item.Item.ObjName + "'");
+                    resString.Add(item.Item.ObjName);
 
                     _index++;
                 }
@@ -103,9 +103,7 @@ namespace DNNDetector
                 //byte[] imgBboxes = DrawAllBb(frameIndex, Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx)),
                 //        validObjects, Brushes.Pink);
             }
-            string res = "[" + String.Join(", ", resString) + "]";
-            finalResults.Add(res);
-            Console.WriteLine("Detection: {0}", res);
+            finalResults.Add(resString);
             
             return (validObjects.Count == 0 ? null : validObjects);
         }

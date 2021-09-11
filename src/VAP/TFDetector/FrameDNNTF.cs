@@ -21,7 +21,7 @@ namespace TFDetector
         private static int _imageWidth, _imageHeight, _index;
         private static List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> _lines;
         private static HashSet<string> _category;
-        public static List<string> finalResults = new List<string>();
+        public static List<List<string>> finalResults = new List<List<string>>();
 
         TFWrapper tfWrapper = new TFWrapper();
         byte[] imageByteArray;
@@ -65,26 +65,13 @@ namespace TFDetector
             else 
             {
                 List<string> resString = new List<string>();
-                
                 foreach (var item in preValidItems)
                 {
-                    
                     validObjects.Add(item);
-                    resString.Add("'" + item.ObjName + "'");
+                    resString.Add(item.ObjName);
                     _index++;
                 }
-
-                if (resString.Count > 0)
-                {
-                    string res = "[" + String.Join(", ", resString) + "]";
-                    finalResults.Add(res);
-                    Console.WriteLine("Detection: {0}", res);
-                }
-                else
-                {
-                    finalResults.Add("[]");
-                }
-                
+                finalResults.Add(resString);
             }
 
             //run overlap ratio-based validation

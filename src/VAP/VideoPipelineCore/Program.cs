@@ -11,6 +11,7 @@ using LineDetector;
 using OpenCvSharp;
 using PostProcessor;
 using System;
+using System.Text.Json;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
@@ -18,6 +19,17 @@ using TFDetector;
 
 namespace VideoPipelineCore
 {
+    public class Result
+    {
+        public List<double> latency { get; set; } 
+        public List<List<string>> object_detection { get; set; }
+
+        
+        public string Searialize()
+        {
+            return JsonSerializer.Serialize(this);
+        }
+    }
     class Program
     {
         static void Main(string[] args)
@@ -39,15 +51,15 @@ namespace VideoPipelineCore
             else
             {
                 isVideoStream = false;
-                videoUrl = @"media/" + args[1];
+                videoUrl = @"media/" + args[0];
             }
-            string lineFile = @"cfg/" + args[2];
+            string lineFile = @"cfg/" + args[1];
             Console.WriteLine(args[3]);
-            int SAMPLING_FACTOR = int.Parse(args[3]);
-            double RESOLUTION_FACTOR = double.Parse(args[4]);
+            int SAMPLING_FACTOR = int.Parse(args[2]);
+            double RESOLUTION_FACTOR = double.Parse(args[3]);
 
             HashSet<string> category = new HashSet<string>();
-            for (int i = 5; i < args.Length; i++)
+            for (int i = 4; i < args.Length; i++)
             {
                 category.Add(args[i]);
             }
@@ -172,7 +184,7 @@ namespace VideoPipelineCore
             //RUN PIPELINE 
             DateTime startTime = DateTime.Now;
             DateTime prevTime = DateTime.Now;
-            List<string> latencies = new List<string>();
+            List<double> latencies = new List<double>();
             while (true)
             {
                 if (!loop)
@@ -295,18 +307,25 @@ namespace VideoPipelineCore
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double latency = (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / latency;
-                latencies.Add(latency.ToString());
+                latencies.Add(latency);
                 Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
             }
 
-            // Console.WriteLine("{0}", FramePreProcessor.FrameDisplay.displayKVpairs.ToString());
-            // Console.WriteLine("Done!");
-            string detectionRes = "[" + String.Join(", ", FrameDNNOnnxYolo.finalResults) + "]";
-            string detectionRes1 = "[" + String.Join(", ", FrameDNNOnnxYolo.finalResults) + "]";
-            Console.WriteLine("Latencies: {0}", String.Join(", ", latencies));
-            Console.WriteLine("Detections: {0}", detectionRes);
-            Console.WriteLine("Detections: {0}", detectionRes1);
+            List<List<string>> prediction = new List<List<string>>();
+            if (new int[] {2}.Contains(pplConfig))
+            {
+                prediction = FrameDNNTF.finalResults;
+            } else if (new int[] {8}.Contains(pplConfig))
+            {
+                prediction = FrameDNNOnnxYolo.finalResults;
+            }
+            Result res = new Result
+            {
+                latency = latencies,
+                object_detection = prediction
+            };
+            Console.WriteLine(res.Searialize());
         }
     }
 }
