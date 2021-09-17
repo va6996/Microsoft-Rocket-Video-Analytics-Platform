@@ -17,3 +17,4 @@ sudo wget --output-document="src/VAP/YoloWrapper/Yolo.Config/YoloV3Coco/yolov3.w
 sudo wget --output-document="src/VAP/YoloWrapper/Yolo.Config/YoloV3TinyCoco/yolov3-tiny.weights" https://pjreddie.com/media/files/yolov3-tiny.weights
 sudo wget --output-document="modelOnnx/yolov3ort.onnx" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-yolov3ort.onnx
 sudo wget --output-document="modelOnnx/yolov3tinyort.onnx" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-yolov3tinyort.onnx
+sudo wget --output-document="modelOnnx/maskrcnnort.onnx" https://github.com/onnx/models/blob/master/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-10.onnx

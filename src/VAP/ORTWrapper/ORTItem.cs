@@ -29,5 +29,16 @@ namespace Wrapper.ORT
             this.TriggerLineID = lineID;
             this.TriggerLine = lineName;
         }
+        
+        public ORTItem(int x, int y, int width, int height, int catId, string catName, double confidence)
+        {
+            this.X = Math.Max(0, x);
+            this.Y = Math.Max(0, y);
+            this.Width = width;
+            this.Height = height;
+            this.ObjId = catId;
+            this.ObjName = catName;
+            this.Confidence = confidence;
+        }
     }
 }
