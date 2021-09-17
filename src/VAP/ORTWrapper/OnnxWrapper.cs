@@ -12,18 +12,18 @@ using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
-using NumSharp.Extensions;
 
 namespace Wrapper.ORT
 {
-    public class OnnxWrapper
+    public abstract class OnnxWrapper
     {
-        static IYoloConfiguration cfg;
-        static InferenceSession session1, session2;
+        protected IYoloConfiguration cfg;
+        InferenceSession session1, session2;
         DNNMode mode = DNNMode.Unknown;
 
         public OnnxWrapper(string modelPath, DNNMode mode)
         {
+            string actualPath = $@"modelOnnx/{modelPath}ort.onnx";
             // Optional : Create session options and set the graph optimization level for the session
             SessionOptions options = new SessionOptions();
             //options.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_EXTENDED;
@@ -34,10 +34,10 @@ namespace Wrapper.ORT
             {
                 case DNNMode.LT:
                 case DNNMode.Frame:
-                    session1 = new InferenceSession(modelPath, SessionOptions.MakeSessionOptionWithCudaProvider(0));
+                    session1 = new InferenceSession(actualPath, SessionOptions.MakeSessionOptionWithCudaProvider(0));
                     break;
                 case DNNMode.CC:
-                    session2 = new InferenceSession(modelPath, SessionOptions.MakeSessionOptionWithCudaProvider(0));
+                    session2 = new InferenceSession(actualPath, SessionOptions.MakeSessionOptionWithCudaProvider(0));
                     break;
             }
         }
@@ -45,10 +45,7 @@ namespace Wrapper.ORT
         public List<ORTItem> UseApi(Bitmap bitmap, int h, int w)
         {
             float[] imgData = LoadTensorFromImageFile(bitmap);
-
-            var container = new List<NamedOnnxValue>();
-            var tensor1 = new DenseTensor<float>(imgData, new int[] {3, 416, 416 });
-            container.Add(NamedOnnxValue.CreateFromTensor<float>("image", tensor1));
+            var container = getContainer(imgData);
             
             // Run the inference
             switch (mode)
@@ -57,7 +54,7 @@ namespace Wrapper.ORT
                 case DNNMode.Frame:
                     using (var results = session1.Run(container))  // results is an IDisposableReadOnlyCollection<DisposableNamedOnnxValue> container
                     {
-                        List<ORTItem> itemList =  PostProcessing2(results);
+                        List<ORTItem> itemList =  PostProcessing(results);
                         return itemList;
                     }
                 case DNNMode.CC:
@@ -71,7 +68,11 @@ namespace Wrapper.ORT
             return null;
         }
 
-        public static float[] LoadTensorFromPreProcessedFile(string filename)
+        protected abstract List<NamedOnnxValue> getContainer(float[] imgData);
+        protected abstract List<ORTItem> PostProcessing(IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results);
+        protected abstract float[] LoadTensorFromImageFile(Bitmap bitmap);
+        
+        public float[] LoadTensorFromPreProcessedFile(string filename)
         {
             var tensorData = new List<float>();
 
@@ -95,40 +96,9 @@ namespace Wrapper.ORT
             return tensorData.ToArray();
         }
 
-        static float[] LoadTensorFromImageFile(Bitmap bitmap)
-        {
-            RGBtoBGR(bitmap);
-            int iw = bitmap.Width, ih = bitmap.Height, w = 416, h = 416, nw, nh;
+        
 
-            float scale = Math.Min((float)w/iw, (float)h/ih);
-            nw = (int)(iw * scale);
-            nh = (int)(ih * scale);
-
-            //resize
-            Bitmap rsImg = ResizeImage(bitmap, nw, nh);
-            Bitmap boxedImg = new Bitmap(w, h, PixelFormat.Format24bppRgb);
-            using (Graphics gr = Graphics.FromImage(boxedImg))
-            {
-                gr.FillRectangle(new SolidBrush(Color.FromArgb(255, 128, 128, 128)), 0, 0, boxedImg.Width, boxedImg.Height);
-                gr.DrawImage(rsImg, new Point((int)((w - nw) / 2), (int)((h - nh) / 2)));
-            }
-            var imgData = boxedImg.ToNDArray(flat: false, copy: true);
-
-            imgData /= 1.0;
-            imgData = np.transpose(imgData, new int[] { 0, 3, 1, 2 });
-            imgData = imgData.reshape(1, 3 * w * h);
-
-            double[] doubleArray = imgData[0].ToArray<double>();
-            float[] floatArray = new float[doubleArray.Length];
-            for (int i = 0; i < doubleArray.Length; i++)
-            {
-                floatArray[i] = (float)doubleArray[i];
-            }
-
-            return floatArray;
-        }
-
-        private static void RGBtoBGR(Bitmap bmp)
+        protected void RGBtoBGR(Bitmap bmp)
         {
             BitmapData data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
                                            ImageLockMode.ReadWrite, bmp.PixelFormat);
@@ -149,68 +119,6 @@ namespace Wrapper.ORT
             Marshal.Copy(rgbValues, 0, scan0, length);
 
             bmp.UnlockBits(data);
-        }
-
-        static List<ORTItem> PostProcessing(IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results)
-        {
-            List<ORTItem> itemList = new List<ORTItem>();
-
-            List<float[]> out_boxes = new List<float[]>();
-            List<float[]> out_scores = new List<float[]>();
-            List<int> out_classes = new List<int>();
-
-            var boxes = results.AsEnumerable().ElementAt(0).AsTensor<float>();
-            var scores = results.AsEnumerable().ElementAt(1).AsTensor<float>();
-            var indices = results.AsEnumerable().ElementAt(2).AsTensor<int>();
-            int nbox = indices.Count() / 3;
-
-            for (int ibox = 0; ibox < nbox; ibox++)
-            {
-                out_classes.Add(indices[0, 0, ibox * 3 + 1]);
-
-                float[] score = new float[80];
-                for (int j = 0; j < 80; j++)
-                {
-                    score[j] = scores[indices[0, 0, ibox * 3 + 0], j, indices[0, 0, ibox * 3 + 2]];
-                }
-                out_scores.Add(score);
-
-                float[] box = new float[]
-                {
-                    boxes[indices[0, 0, ibox * 3 + 0], indices[0, 0, ibox * 3 + 2], 0],
-                    boxes[indices[0, 0, ibox * 3 + 0], indices[0, 0, ibox * 3 + 2], 1],
-                    boxes[indices[0, 0, ibox * 3 + 0], indices[0, 0, ibox * 3 + 2], 2],
-                    boxes[indices[0, 0, ibox * 3 + 0], indices[0, 0, ibox * 3 + 2], 3]
-                };
-                out_boxes.Add(box);
-
-                //output
-                ORTItem item = new ORTItem((int)box[1], (int)box[0], (int)(box[3] - box[1]), (int)(box[2] - box[0]), out_classes[ibox], cfg.Labels[out_classes[ibox]], out_scores[ibox][out_classes[ibox]], 0, "lineName");
-                itemList.Add(item);
-            }
-
-            return itemList;
-        }
-        
-        static List<ORTItem> PostProcessing2(IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results)
-        {
-            List<ORTItem> itemList = new List<ORTItem>();
-            
-            var boxes = results.AsEnumerable().ElementAt(0).AsTensor<float>();
-            var indices = results.AsEnumerable().ElementAt(1).AsTensor<Int64>();
-            var scores = results.AsEnumerable().ElementAt(2).AsTensor<float>();
-            
-            int nbox = indices.Count();
-
-            for (int ibox = 0; ibox < nbox; ibox++)
-            { 
-                //output
-                ORTItem item = new ORTItem((int)boxes[ibox,1], (int)boxes[ibox,0], (int)(boxes[ibox,3]-boxes[ibox,1]),
-                    (int)(boxes[ibox,2]-boxes[ibox,0]), (int)indices[ibox], cfg.Labels[indices[ibox]+1], scores[ibox]);
-                itemList.Add(item);
-            }
-
-            return itemList;
         }
 
         public void DrawBoundingBox(Image imageOri,
@@ -257,7 +165,7 @@ namespace Wrapper.ORT
             }
         }
 
-        private static Bitmap ResizeImage(Bitmap image, int width, int height)
+        protected Bitmap ResizeImage(Bitmap image, int width, int height)
         {
             var destRect = new Rectangle(0, 0, width, height);
             var destImage = new Bitmap(width, height);
@@ -282,5 +190,6 @@ namespace Wrapper.ORT
 
             return destImage;
         }
+        
     }
 }

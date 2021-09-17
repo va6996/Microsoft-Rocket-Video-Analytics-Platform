@@ -200,7 +200,7 @@ namespace VideoPipelineCore
             List<double> latencies = new List<double>();
             int iter = 0;
             while (true)
-            {   Console.WriteLine("iteration number: " + iter.ToString());
+            {   
                 if (!loop)
                 {
                     if (!isVideoStream && frameIndex >= videoTotalFrame)
