@@ -22,6 +22,7 @@ namespace TFDetector
         private static List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> _lines;
         private static HashSet<string> _category;
         public static List<List<string>> finalResults = new List<List<string>>();
+        public static string modelName = "FrameDnnTf";
 
         TFWrapper tfWrapper = new TFWrapper();
         byte[] imageByteArray;

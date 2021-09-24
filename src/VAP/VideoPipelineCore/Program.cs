@@ -14,6 +14,7 @@ using System;
 using System.Text.Json;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using TFDetector;
 
@@ -59,13 +60,13 @@ namespace VideoPipelineCore
             double RESOLUTION_FACTOR = double.Parse(args[3]);
 
             HashSet<string> category = new HashSet<string>();
-            for (int i = 4; i < args.Length; i++)
+            for (int i = 5; i < args.Length; i++)
             {
                 category.Add(args[i]);
             }
 
             //initialize pipeline settings
-            string[] stringPplConfigs = ConfigurationManager.AppSettings["PplConfig"].Split(',');
+            string[] stringPplConfigs = args[4].Split(',');
             int[] pplConfigs = new int[stringPplConfigs.Length];
             for (int i=0;i<stringPplConfigs.Length;i++)
             {
@@ -171,6 +172,13 @@ namespace VideoPipelineCore
             if (new int[] { 9 }.Intersect(pplConfigs).Any())
             {
                 rcnnOnnx = new MaskRCNNOnnx(convLines, "maskrcnn", Wrapper.ORT.DNNMode.Frame);
+            }
+            
+            FasterRCNNOnnx fasterRcnnOnnx = null;
+            List<Item> fasterRCNNONNXItemList = null;
+            if (new int[] { 10 }.Intersect(pplConfigs).Any())
+            {
+                fasterRcnnOnnx = new FasterRCNNOnnx(convLines, "fasterrcnn", Wrapper.ORT.DNNMode.Frame);
             }
 
             //-----Call ML models deployed on Azure Machine Learning Workspace-----
@@ -291,7 +299,12 @@ namespace VideoPipelineCore
                     maskRCNNONNXItemList = rcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = maskRCNNONNXItemList;
                 }
-
+                
+                if (new int[] { 10 }.Intersect(pplConfigs).Any())
+                {
+                    fasterRCNNONNXItemList = fasterRcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    ItemList = fasterRCNNONNXItemList;
+                }
 
                 //Azure Machine Learning
                 if (new int[] { 6 }.Intersect(pplConfigs).Any())
@@ -332,16 +345,27 @@ namespace VideoPipelineCore
 		        prevTime = DateTime.Now;
             }
 
-            List<List<string>> prediction = new List<List<string>>();
+            string modelName = "";
+            List<List<string>> prediction = new List<List<string>>(new List<string>[frameIndex]);
             if (new int[] {2}.Intersect(pplConfigs).Any())
             {
-                prediction = FrameDNNTF.finalResults;
-            } else if (new int[] {8}.Intersect(pplConfigs).Any())
+                mergePredictions(prediction, FrameDNNTF.finalResults);
+                modelName += "_" + FrameDNNTF.modelName;
+            }
+            if (new int[] {8}.Intersect(pplConfigs).Any())
             {
-                prediction = FrameDNNOnnxYolo.finalResults;
-            } else if (new int[] {9}.Intersect(pplConfigs).Any())
+                mergePredictions(prediction, FrameDNNOnnxYolo.finalResults);
+                modelName += "_" +  FrameDNNOnnxYolo.modelName;
+            }
+            if (new int[] {9}.Intersect(pplConfigs).Any())
             {
-                prediction = MaskRCNNOnnx.finalResults;
+                mergePredictions(prediction, MaskRCNNOnnx.finalResults);
+                modelName += "_" + MaskRCNNOnnx.modelName;
+            }
+            if (new int[] {10}.Intersect(pplConfigs).Any())
+            {
+                mergePredictions(prediction, FasterRCNNOnnx.finalResults);
+                modelName += "_" + FasterRCNNOnnx.modelName;
             }
             Result res = new Result
             {
@@ -349,6 +373,16 @@ namespace VideoPipelineCore
                 object_detection = prediction
             };
             Console.WriteLine(res.Serialize());
+            string videoName = videoUrl.Split("/").Last().Split(".").First();
+            File.WriteAllText(@"rocket" + modelName  + "_" + videoName +".json", res.Serialize());
+        }
+
+        static void mergePredictions(List<List<string>> dest, List<List<string>> src)
+        {
+            for (int i = 0; i < dest.Count; i++)
+            {
+                dest[i].AddRange(src[i]);
+            }
         }
     }
 }

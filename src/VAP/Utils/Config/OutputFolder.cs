@@ -21,5 +21,7 @@
 
         public static string OutputFolderFrameDNNONNX { get; set; } = "output_framednnonnx/";
         public static string OutputFolderMaskRCNNONNX { get; set; } = "output_maskrcnnonnx/";
+        
+        public static string OutputFolderFasterRCNNONNX { get; set; } = "output_fasterrcnnonnx/";
     }
 }

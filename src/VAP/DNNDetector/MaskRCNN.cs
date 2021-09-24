@@ -23,7 +23,7 @@ namespace DNNDetector
         private static int _imageWidth, _imageHeight, _index;
         private static List<Tuple<string, int[]>> _lines;
         private static Dictionary<string, int> _category;
-        private static string modelName = "MaskRCNN";
+        public static string modelName = "MaskRCnn";
         public static List<List<string>> finalResults = new List<List<string>>();
 
         byte[] imageByteArray;
