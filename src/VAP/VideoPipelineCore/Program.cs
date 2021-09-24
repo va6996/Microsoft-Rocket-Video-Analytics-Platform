@@ -346,7 +346,11 @@ namespace VideoPipelineCore
             }
 
             string modelName = "";
-            List<List<string>> prediction = new List<List<string>>(new List<string>[frameIndex]);
+            List<List<string>> prediction = new List<List<string>>();
+            for (int i = 0; i < frameIndex; i++)
+            {
+                prediction.Add(new List<string>());
+            }
             if (new int[] {2}.Intersect(pplConfigs).Any())
             {
                 mergePredictions(prediction, FrameDNNTF.finalResults);
@@ -374,12 +378,12 @@ namespace VideoPipelineCore
             };
             Console.WriteLine(res.Serialize());
             string videoName = videoUrl.Split("/").Last().Split(".").First();
-            File.WriteAllText(@"rocket" + modelName  + "_" + videoName +".json", res.Serialize());
+            File.WriteAllText(@"benchmarks/rocket" + modelName  + "_" + videoName +".json", res.Serialize());
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)
         {
-            for (int i = 0; i < dest.Count; i++)
+            for (int i = 0; i < src.Count; i++)
             {
                 dest[i].AddRange(src[i]);
             }
