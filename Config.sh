@@ -4,10 +4,10 @@ mkdir "src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/"
 mkdir "src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/win7-x64/native/"
 
 wget --output-document="src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow.so" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-libtensorflow.so
-ln -s src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow.so src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/liblibtensorflow.so
+cp src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow.so src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/liblibtensorflow.so
 
 wget --output-document="src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow_framework.so" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-libtensorflow_framework.so
-ln -s src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow_framework.so src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow_framework.so.1
+cp src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow_framework.so src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/linux/native/libtensorflow_framework.so.1
 
 wget --output-document="src/VAP/TFWrapper/packages/TensorFlowSharp.1.12.0/runtimes/win7-x64/native/libtensorflow.dll" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-libtensorflow.dll
 
