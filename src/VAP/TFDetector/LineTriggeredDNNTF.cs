@@ -8,6 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using BGSObjectDetector;
 using Utils.Config;
 
 namespace TFDetector
@@ -26,22 +27,22 @@ namespace TFDetector
             frameDNNTF = new FrameDNNTF(lines);
         }
 
-        public List<Item> Run(Mat frame, int frameIndex, Dictionary<string, int> counts, List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines, HashSet<string> category)
+        public List<Item> Run(Mat frame, int frameIndex, Dictionary<string, int> counts, List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines, HashSet<string> category, List<Box> foregroundBoxes)
         {
             // buffer frame
             frameBufferLtDNNTF.Buffer(frame);
 
             if (counts_prev.Count != 0)
             {
-                foreach (string lane in counts.Keys)
-                {
-                    int diff = Math.Abs(counts[lane] - counts_prev[lane]);
-                    if (diff > 0) //object detected by BGS-based counter
-                    {
+                // foreach (string lane in counts.Keys)
+                // {
+                //     int diff = Math.Abs(counts[lane] - counts_prev[lane]);
+                //     if (diff > 0) //object detected by BGS-based counter
+                //     {
                         if (frameIndex >= DNNConfig.FRAME_SEARCH_RANGE)
                         {
                             // call tf cheap model for crosscheck
-                            int lineID = Array.IndexOf(counts.Keys.ToArray(), lane);
+                            // int lineID = Array.IndexOf(counts.Keys.ToArray(), lane);
                             Mat[] frameBufferArray = frameBufferLtDNNTF.ToArray();
                             int frameIndexTF = frameIndex - 1;
                             DateTime start = DateTime.Now;
@@ -61,8 +62,8 @@ namespace TFDetector
                                     foreach (Item item in analyzedTrackingItems)
                                     {
                                         item.RawImageData = Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameTF));
-                                        item.TriggerLine = lane;
-                                        item.TriggerLineID = lineID;
+                                        item.TriggerLine = "notSet";
+                                        item.TriggerLineID = 0;
                                         item.Model = "Cheap";
                                         ltDNNItem.Add(item);
 
@@ -78,8 +79,8 @@ namespace TFDetector
                                 frameIndexTF--;
                             }
                         }
-                    }
-                }
+                //     }
+                // }
             }
             updateCount(counts);
 

@@ -248,7 +248,7 @@ namespace VideoPipelineCore
                 }
                 else if (new int[] { 5, 6 }.Intersect(pplConfigs).Any())
                 {
-                    ltDNNItemListTF = ltDNNTF.Run(frame, frameIndex, counts, lines, category);
+                    ltDNNItemListTF = ltDNNTF.Run(frame, frameIndex, counts, lines, category, foregroundBoxes);
                     ItemList = ltDNNItemListTF;
                 }
                 else if (new int[] { 7 }.Intersect(pplConfigs).Any())

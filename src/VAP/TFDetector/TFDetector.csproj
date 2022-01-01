@@ -9,6 +9,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\BGSObjectDetector\BGSObjectDetector.csproj" />
     <ProjectReference Include="..\DNNDetector\DNNDetector.csproj" />
     <ProjectReference Include="..\TFWrapper\TFWrapper.csproj" />
   </ItemGroup>
