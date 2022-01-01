@@ -356,6 +356,11 @@ namespace VideoPipelineCore
                 mergePredictions(prediction, FrameDNNTF.finalResults);
                 modelName += "_" + FrameDNNTF.modelName;
             }
+            if (new int[] {5, 6}.Intersect(pplConfigs).Any())
+            {
+                mergePredictions(prediction, LineTriggeredDNNTF.finalResults);
+                modelName += "_" + LineTriggeredDNNTF.modelName;
+            }
             if (new int[] {8}.Intersect(pplConfigs).Any())
             {
                 mergePredictions(prediction, FrameDNNOnnxYolo.finalResults);

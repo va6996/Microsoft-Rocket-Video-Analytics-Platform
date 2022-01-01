@@ -19,6 +19,8 @@ namespace TFDetector
         FrameDNNTF frameDNNTF;
         FrameBuffer frameBufferLtDNNTF;
         Dictionary<string, int> counts_prev = new Dictionary<string, int>();
+        public static List<List<string>> finalResults = new List<List<string>>();
+        public static string modelName = "LineTriggeredDNNTF";
 
         public LineTriggeredDNNTF(List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines)
         {
@@ -47,7 +49,9 @@ namespace TFDetector
                             int frameIndexTF = frameIndex - 1;
                             DateTime start = DateTime.Now;
                             List<Item> analyzedTrackingItems = null;
-
+                            
+                            List<string> resString = new List<string>();
+    
                             while (frameIndex - frameIndexTF < DNNConfig.FRAME_SEARCH_RANGE)
                             {
                                 Console.WriteLine("** Calling Cheap on " + (DNNConfig.FRAME_SEARCH_RANGE - (frameIndex - frameIndexTF)));
@@ -66,6 +70,7 @@ namespace TFDetector
                                         item.TriggerLineID = 0;
                                         item.Model = "Cheap";
                                         ltDNNItem.Add(item);
+                                        resString.Add(item.ObjName);
 
                                         // output cheap TF results
                                         string blobName_Cheap = $@"frame-{frameIndex}-Cheap-{item.Confidence}.jpg";
@@ -78,10 +83,12 @@ namespace TFDetector
                                 }
                                 frameIndexTF--;
                             }
+                            finalResults.Add(resString);
                         }
                 //     }
                 // }
             // }
+            
             updateCount(counts);
 
             return null;
