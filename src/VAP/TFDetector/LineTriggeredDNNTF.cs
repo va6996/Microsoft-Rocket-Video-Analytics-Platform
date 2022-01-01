@@ -51,7 +51,8 @@ namespace TFDetector
                             List<Item> analyzedTrackingItems = null;
                             
                             List<string> resString = new List<string>();
-    
+                            List<Item> ltDNNItem = new List<Item>();
+
                             while (frameIndex - frameIndexTF < DNNConfig.FRAME_SEARCH_RANGE)
                             {
                                 Console.WriteLine("** Calling Cheap on " + (DNNConfig.FRAME_SEARCH_RANGE - (frameIndex - frameIndexTF)));
@@ -62,7 +63,6 @@ namespace TFDetector
                                 // object detected by cheap model
                                 if (analyzedTrackingItems != null)
                                 {
-                                    List<Item> ltDNNItem = new List<Item>();
                                     foreach (Item item in analyzedTrackingItems)
                                     {
                                         item.RawImageData = Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameTF));
@@ -79,11 +79,12 @@ namespace TFDetector
                                         File.WriteAllBytes(@OutputFolder.OutputFolderAll + blobName_Cheap, item.TaggedImageData);
                                     }
                                     updateCount(counts);
-                                    return ltDNNItem;
+                                    break;
                                 }
                                 frameIndexTF--;
                             }
                             finalResults.Add(resString);
+                            return ltDNNItem;
                         }
                 //     }
                 // }
