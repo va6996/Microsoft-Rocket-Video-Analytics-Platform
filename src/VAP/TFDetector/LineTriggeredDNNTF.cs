@@ -32,8 +32,8 @@ namespace TFDetector
             // buffer frame
             frameBufferLtDNNTF.Buffer(frame);
 
-            if (counts_prev.Count != 0)
-            {
+            // if (counts_prev.Count != 0)
+            // {
                 // foreach (string lane in counts.Keys)
                 // {
                 //     int diff = Math.Abs(counts[lane] - counts_prev[lane]);
@@ -81,7 +81,7 @@ namespace TFDetector
                         }
                 //     }
                 // }
-            }
+            // }
             updateCount(counts);
 
             return null;
