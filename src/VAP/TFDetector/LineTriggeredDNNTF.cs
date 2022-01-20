@@ -29,7 +29,9 @@ namespace TFDetector
             frameDNNTF = new FrameDNNTF(lines);
         }
 
-        public List<Item> Run(Mat frame, int frameIndex, Dictionary<string, int> counts, List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines, HashSet<string> category, List<Box> foregroundBoxes)
+        public List<Item> Run(Mat frame, int frameIndex, Dictionary<string, int> counts, List<(string key, 
+            (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines, HashSet<string> category, 
+            List<Box> foregroundBoxes)
         {
             // buffer frame
             frameBufferLtDNNTF.Buffer(frame);
@@ -58,7 +60,7 @@ namespace TFDetector
                                 Console.WriteLine("** Calling Cheap on " + (DNNConfig.FRAME_SEARCH_RANGE - (frameIndex - frameIndexTF)));
                                 Mat frameTF = frameBufferArray[DNNConfig.FRAME_SEARCH_RANGE - (frameIndex - frameIndexTF)];
 
-                                analyzedTrackingItems = frameDNNTF.Run(frameTF, frameIndexTF, category, System.Drawing.Brushes.Pink, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_LARGE, false);
+                                analyzedTrackingItems = frameDNNTF.Run(frameTF, frameIndexTF, category, System.Drawing.Brushes.Pink, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_LARGE, false, foregroundBoxes);
 
                                 // object detected by cheap model
                                 if (analyzedTrackingItems != null)

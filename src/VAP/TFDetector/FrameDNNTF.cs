@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using BGSObjectDetector;
 using Utils.Config;
 using Wrapper.TF;
 using Wrapper.TF.Common;
@@ -33,7 +34,8 @@ namespace TFDetector
             _lines = lines;
         }
 
-        public List<Item> Run(Mat frameTF, int frameIndex, HashSet<string> category, Brush bboxColor, double min_score_for_linebbox_overlap, bool saveImg = true)
+        public List<Item> Run(Mat frameTF, int frameIndex, HashSet<string> category, Brush bboxColor, 
+            double min_score_for_linebbox_overlap, bool saveImg = true, List<Box> foregroundBoxes = null)
         {
             _imageWidth = frameTF.Width;
             _imageHeight = frameTF.Height;
