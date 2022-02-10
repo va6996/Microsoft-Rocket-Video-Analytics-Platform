@@ -21,10 +21,7 @@ namespace DNNDetector
     public class FasterRCNNOnnx : OnnxWrapper
     {
         private static int _imageWidth, _imageHeight, _index;
-        private static List<Tuple<string, int[]>> _lines;
-        private static Dictionary<string, int> _category;
         public static string modelName = "FasterRCnnOnnx";
-        public static List<List<string>> finalResults = new List<List<string>>();
 
         byte[] imageByteArray;
 
@@ -48,10 +45,13 @@ namespace DNNDetector
             _category = category;
             imageByteArray = Utils.Utils.ImageToByteJpeg(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx)); // Todo: feed in bmp
 
+            DateTime startTime = DateTime.Now;
             List<ORTItem> boundingBoxes = UseApi(
                     OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx),
                     _imageHeight,
                     _imageWidth);
+            DateTime endTime = DateTime.Now;
+            latencies["model"].Add((endTime-startTime).TotalMilliseconds);
 
             List<string> resString = new List<string>();
 

@@ -17,6 +17,7 @@ using System.Configuration;
 using System.IO;
 using System.Linq;
 using TFDetector;
+using Wrapper.ORT;
 
 namespace VideoPipelineCore
 {
@@ -24,8 +25,15 @@ namespace VideoPipelineCore
     {
         public List<double> latency { get; set; } 
         public List<List<string>> object_detection { get; set; }
+        public Dictionary<string, List<double>> Latencies { get; set; }
 
-        
+        public Result()
+        {
+            Latencies = new Dictionary<string, List<double>>();
+            Latencies["total"] = new List<double>();
+            Latencies["model"] = new List<double>();
+        }
+
         public string Serialize()
         {
             return JsonSerializer.Serialize(this);
@@ -347,6 +355,7 @@ namespace VideoPipelineCore
 
             string modelName = "";
             List<List<string>> prediction = new List<List<string>>();
+            Dictionary<string, List<double>> latenciesDict = new Dictionary<string, List<double>>();
             for (int i = 0; i < frameIndex; i++)
             {
                 prediction.Add(new List<string>());
@@ -365,22 +374,27 @@ namespace VideoPipelineCore
             {
                 mergePredictions(prediction, FrameDNNOnnxYolo.finalResults);
                 modelName += "_" +  FrameDNNOnnxYolo.modelName;
+                latenciesDict = FrameDNNOnnxYolo.latencies;
             }
             if (new int[] {9}.Intersect(pplConfigs).Any())
             {
-                mergePredictions(prediction, MaskRCNNOnnx.finalResults);
+                mergePredictions(prediction, OnnxWrapper.finalResults);
                 modelName += "_" + MaskRCNNOnnx.modelName;
+                latenciesDict = OnnxWrapper.latencies;
             }
             if (new int[] {10}.Intersect(pplConfigs).Any())
             {
-                mergePredictions(prediction, FasterRCNNOnnx.finalResults);
+                mergePredictions(prediction, OnnxWrapper.finalResults);
                 modelName += "_" + FasterRCNNOnnx.modelName;
+                latenciesDict = OnnxWrapper.latencies;
             }
             Result res = new Result
             {
-                latency = latencies,
-                object_detection = prediction
+                object_detection = prediction,
+                Latencies = latenciesDict
             };
+            res.Latencies["total"] = latencies;
+            
             Console.WriteLine(res.Serialize());
             string videoName = videoUrl.Split("/").Last().Split(".").First();
             File.WriteAllText(@"benchmarks/rocket" + modelName  + "_" + videoName +".json", res.Serialize());

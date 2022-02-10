@@ -20,9 +20,15 @@ namespace Wrapper.ORT
         protected IYoloConfiguration cfg;
         InferenceSession session1, session2;
         DNNMode mode = DNNMode.Unknown;
+        protected static List<Tuple<string, int[]>> _lines;
+        protected static Dictionary<string, int> _category;
+        public static List<List<string>> finalResults = new List<List<string>>();
+        public static Dictionary<string, List<double>> latencies = new Dictionary<string, List<double>>();
 
         public OnnxWrapper(string modelPath, DNNMode mode)
         {
+            latencies["model"] = new List<double>();
+            
             string actualPath = $@"modelOnnx/{modelPath}ort.onnx";
             // Optional : Create session options and set the graph optimization level for the session
             SessionOptions options = new SessionOptions();
@@ -46,26 +52,35 @@ namespace Wrapper.ORT
         {
             float[] imgData = LoadTensorFromImageFile(bitmap);
             var container = getContainer(imgData);
-            
+            List<ORTItem> itemList;
+
             // Run the inference
+            DateTime startTime = DateTime.Now;
             switch (mode)
             {
                 case DNNMode.LT:
                 case DNNMode.Frame:
                     using (var results = session1.Run(container))  // results is an IDisposableReadOnlyCollection<DisposableNamedOnnxValue> container
                     {
-                        List<ORTItem> itemList =  PostProcessing(results);
-                        return itemList;
+                        itemList =  PostProcessing(results);
+                        break;
                     }
                 case DNNMode.CC:
                     using (var results = session2.Run(container))  // results is an IDisposableReadOnlyCollection<DisposableNamedOnnxValue> container
                     {
-                        List<ORTItem> itemList = PostProcessing(results);
-                        return itemList;
+                        itemList = PostProcessing(results);
+                        break;
+                    }
+                default:
+                    {
+                        itemList = null;
+                        break;
                     }
             }
+            DateTime endTime = DateTime.Now;
+            latencies["model"].Add((endTime-startTime).TotalMilliseconds);
 
-            return null;
+            return itemList;
         }
 
         protected abstract List<NamedOnnxValue> getContainer(float[] imgData);

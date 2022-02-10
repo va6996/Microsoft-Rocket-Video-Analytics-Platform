@@ -22,6 +22,7 @@ namespace DNNDetector
         private static Dictionary<string, int> _category;
         public static List<List<string>> finalResults = new List<List<string>>();
         public static string modelName = "FrameDnnOnnxYolo";
+        public static Dictionary<string, List<double>> latencies = new Dictionary<string, List<double>>();
 
         ORTWrapper onnxWrapper;
         byte[] imageByteArray;
@@ -30,6 +31,7 @@ namespace DNNDetector
         {
             _lines = lines;
             onnxWrapper = new ORTWrapper($@"modelOnnx/{modelName}ort.onnx", mode);
+            latencies["model"] = new List<double>();
         }
 
         public List<Item> Run(Mat frameOnnx, int frameIndex, Dictionary<string, int> category, Brush bboxColor, int lineID, double min_score_for_linebbox_overlap, bool savePictures = false)
@@ -39,10 +41,13 @@ namespace DNNDetector
             _category = category;
             imageByteArray = Utils.Utils.ImageToByteJpeg(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx)); // Todo: feed in bmp
 
+            DateTime startTime = DateTime.Now;
             List<ORTItem> boundingBoxes = onnxWrapper.UseApi(
                     OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx),
                     _imageHeight,
                     _imageWidth);
+            DateTime endTime = DateTime.Now;
+            latencies["model"].Add((endTime-startTime).TotalMilliseconds);
 
             List<string> resString = new List<string>();
 
