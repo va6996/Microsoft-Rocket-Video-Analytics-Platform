@@ -220,6 +220,8 @@ namespace VideoPipelineCore
             result.Latencies = new Dictionary<string, List<double>>();
             result.Latencies["total"] = new List<double>();
             result.Latencies["bgs"] = new List<double>();
+            result.Latencies["decode"] = new List<double>();
+            result.Latencies["pre_process"] = new List<double>();
             
             while (true)
             {   
@@ -232,11 +234,18 @@ namespace VideoPipelineCore
                 }
 
                 //decoder
+                DateTime startTimeDecode = DateTime.Now;
                 Mat frame = decoder.getNextFrame();
+                DateTime endTimeDecode = DateTime.Now;
+                result.Latencies["decode"].Add((endTimeDecode-startTimeDecode).TotalMilliseconds);
 
                 
                 //frame pre-processor
+                DateTime startTimePreProcess = DateTime.Now;
                 frame = FramePreProcessor.PreProcessor.returnFrame(frame, frameIndex, SAMPLING_FACTOR, RESOLUTION_FACTOR, displayRawVideo);
+                DateTime endTimePreProcess = DateTime.Now;
+                result.Latencies["pre_process"].Add((endTimePreProcess-startTimePreProcess).TotalMilliseconds);
+
                 frameIndex++;
                 if (frame == null) continue;
                 //Console.WriteLine("Frame ID: " + frameIndex);
