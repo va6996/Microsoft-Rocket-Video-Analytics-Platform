@@ -215,6 +215,12 @@ namespace VideoPipelineCore
             DateTime prevTime = DateTime.Now;
             List<double> latencies = new List<double>();
             int iter = 0;
+
+            Result result = new Result();
+            result.Latencies = new Dictionary<string, List<double>>();
+            result.Latencies["total"] = new List<double>();
+            result.Latencies["bgs"] = new List<double>();
+            
             while (true)
             {   
                 if (!loop)
@@ -235,11 +241,12 @@ namespace VideoPipelineCore
                 if (frame == null) continue;
                 //Console.WriteLine("Frame ID: " + frameIndex);
 
-
+                DateTime startTimeBGS = DateTime.Now;
                 //background subtractor
                 Mat fgmask = null;
                 List<Box> foregroundBoxes = bgs.DetectObjects(DateTime.Now, frame, frameIndex, out fgmask);
-                
+                DateTime endTimeBGS = DateTime.Now;
+                result.Latencies["bgs"].Add((endTimeBGS-startTimeBGS).TotalMilliseconds);
 
                 //line detector
                 if (new int[] { 0, 3, 4, 5, 6, 7 }.Intersect(pplConfigs).Any())
@@ -348,7 +355,7 @@ namespace VideoPipelineCore
                 double fps = 1000 * (double)(1) / (DateTime.Now - prevTime).TotalMilliseconds;
                 double latency = (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / latency;
-                latencies.Add(latency);
+                result.Latencies["total"].Add(latency);
                 Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
             }
@@ -388,16 +395,13 @@ namespace VideoPipelineCore
                 modelName += "_" + FasterRCNNOnnx.modelName;
                 latenciesDict = OnnxWrapper.latencies;
             }
-            Result res = new Result
-            {
-                object_detection = prediction,
-                Latencies = latenciesDict
-            };
-            res.Latencies["total"] = latencies;
+            result.object_detection = prediction;
+            latenciesDict.ToList().ForEach(x => result.Latencies.Add(x.Key, x.Value));
+
             
-            Console.WriteLine(res.Serialize());
+            Console.WriteLine(result.Serialize());
             string videoName = videoUrl.Split("/").Last().Split(".").First();
-            File.WriteAllText(@"benchmarks/rocket" + modelName  + "_" + videoName +".json", res.Serialize());
+            File.WriteAllText(@"benchmarks/rocket" + modelName  + "_" + videoName +".json", result.Serialize());
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)
