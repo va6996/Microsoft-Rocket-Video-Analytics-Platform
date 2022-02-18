@@ -24,6 +24,8 @@ namespace TFDetector
         private static HashSet<string> _category;
         public static List<List<string>> finalResults = new List<List<string>>();
         public static string modelName = "FrameDnnTf";
+        public static Dictionary<string, List<double>> latencies = new Dictionary<string, List<double>>();
+
 
         TFWrapper tfWrapper = new TFWrapper();
         byte[] imageByteArray;
@@ -32,6 +34,8 @@ namespace TFDetector
         public FrameDNNTF(List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines)
         {
             _lines = lines;
+            latencies["model"] = new List<double>();
+            latencies["post_process"] = new List<double>();
         }
 
         public List<Item> Run(Mat frameTF, int frameIndex, HashSet<string> category, Brush bboxColor, 
@@ -44,11 +48,16 @@ namespace TFDetector
 
             float[,,] boxes;
             float[,] scores, classes;
+            
+            DateTime startTime = DateTime.Now;
             (boxes, scores, classes) = tfWrapper.Run(imageByteArray);
+            DateTime endTime = DateTime.Now;
+            latencies["model"].Add((endTime-startTime).TotalMilliseconds);
             
             List<Item> preValidItems = ValidateItems(boxes, scores, classes, DNNConfig.MIN_SCORE_FOR_TFOBJECT_OUTPUT);
             List<Item> validObjects = new List<Item>();
-
+            List<string> resString = new List<string>();
+            
             if (_lines != null)
             {
                 for (int lineID = 0; lineID < _lines.Count; lineID++)
@@ -61,17 +70,20 @@ namespace TFDetector
                         item.Item.CroppedImageData = Utils.Utils.CropImage(imageByteArray, item.Item.X, item.Item.Y, item.Item.Width, item.Item.Height);
                         item.Item.Index = _index;
                         validObjects.Add(item.Item);
+                        item.Item.TriggerLineID = lineID;
+                        item.Item.Model = "FrameDNN";
+                        resString.Add(item.Item.ObjName);
                         _index++;
                     }
                 }
             }
             else 
             {
-                List<string> resString = new List<string>();
                 foreach (var item in preValidItems)
                 {
                     validObjects.Add(item);
                     resString.Add(item.ObjName);
+                    item.Model = "FrameDNN";
                     _index++;
                 }
                 finalResults.Add(resString);

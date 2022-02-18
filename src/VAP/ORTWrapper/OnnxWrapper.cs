@@ -28,6 +28,7 @@ namespace Wrapper.ORT
         public OnnxWrapper(string modelPath, DNNMode mode)
         {
             latencies["model"] = new List<double>();
+            latencies["post_process"] = new List<double>();
             
             string actualPath = $@"modelOnnx/{modelPath}ort.onnx";
             // Optional : Create session options and set the graph optimization level for the session

@@ -17,5 +17,5 @@ wget --output-document="src/VAP/YoloWrapper/Yolo.Config/YoloV3Coco/yolov3.weight
 wget --output-document="src/VAP/YoloWrapper/Yolo.Config/YoloV3TinyCoco/yolov3-tiny.weights" https://pjreddie.com/media/files/yolov3-tiny.weights
 wget --output-document="modelOnnx/yolov3ort.onnx" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-yolov3ort.onnx
 wget --output-document="modelOnnx/yolov3tinyort.onnx" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-yolov3tinyort.onnx
-wget --output-document="modelOnnx/maskrcnnort.onnx" https://github.com/onnx/models/blob/master/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-10.onnx
-wget --output-document="modelOnnx/fasterrcnnort.onnx" https://github.com/onnx/models/blob/master/vision/object_detection_segmentation/faster-rcnn/model/FasterRCNN-10.onnx
+wget --output-document="modelOnnx/maskrcnnort.onnx" https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-10.onnx
+wget --output-document="modelOnnx/fasterrcnnort.onnx" https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/faster-rcnn/model/FasterRCNN-10.onnx

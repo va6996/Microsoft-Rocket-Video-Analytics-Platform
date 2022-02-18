@@ -17,6 +17,7 @@ namespace DNNDetector
     public class LineTriggeredDNNORTYolo
     {
         Dictionary<string, int> counts_prev = new Dictionary<string, int>();
+        public static List<List<string>> finalResults = new List<List<string>>();
 
         FrameDNNOnnxYolo frameDNNOnnxYolo;
         FrameBuffer frameBufferLtDNNOnnxYolo;
@@ -35,6 +36,7 @@ namespace DNNDetector
         {
             // buffer frame
             frameBufferLtDNNOnnxYolo.Buffer(frame);
+            List<string> resString = new List<string>();
 
             if (counts_prev.Count != 0)
             {
@@ -69,6 +71,7 @@ namespace DNNDetector
                                         item.TriggerLine = lane;
                                         item.TriggerLineID = lineID;
                                         item.Model = "Cheap";
+                                        resString.Add(item.ObjName);
                                         ltDNNItem.Add(item);
 
                                         // output cheap onnx results
@@ -81,6 +84,7 @@ namespace DNNDetector
                                         }
                                     }
                                     updateCount(counts);
+                                    finalResults.Add(resString);
                                     return ltDNNItem;
                                 }
                                 frameIndexOnnxYolo--;
@@ -89,6 +93,7 @@ namespace DNNDetector
                     }
                 }
             }
+            finalResults.Add(resString);
             updateCount(counts);
             return null;
         }

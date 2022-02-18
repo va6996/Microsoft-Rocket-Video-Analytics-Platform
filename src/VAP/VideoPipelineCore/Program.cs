@@ -23,7 +23,6 @@ namespace VideoPipelineCore
 {
     public class Result
     {
-        public List<double> latency { get; set; } 
         public List<List<string>> object_detection { get; set; }
         public Dictionary<string, List<double>> Latencies { get; set; }
 
@@ -31,7 +30,9 @@ namespace VideoPipelineCore
         {
             Latencies = new Dictionary<string, List<double>>();
             Latencies["total"] = new List<double>();
-            Latencies["model"] = new List<double>();
+            Latencies["bgs"] = new List<double>();
+            Latencies["decode"] = new List<double>();
+            Latencies["pre_process"] = new List<double>();
         }
 
         public string Serialize()
@@ -98,8 +99,7 @@ namespace VideoPipelineCore
             Detector lineDetector = new Detector(SAMPLING_FACTOR, RESOLUTION_FACTOR, lineFile, displayBGSVideo);
             Dictionary<string, int> counts = null;
             Dictionary<string, bool> occupancy = null;
-            // List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
-            List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = null;
+            List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
             List<Tuple<string, int[]>> convLines = lines == null ? null : Utils.Utils.ConvertLines(lines);
             
             //-----LineTriggeredDNN (Darknet)-----
@@ -211,18 +211,11 @@ namespace VideoPipelineCore
             long teleCountsBGS = 0, teleCountsCheapDNN = 0, teleCountsHeavyDNN = 0;
 
             //RUN PIPELINE 
-            DateTime startTime = DateTime.Now;
             DateTime prevTime = DateTime.Now;
-            List<double> latencies = new List<double>();
             int iter = 0;
 
             Result result = new Result();
-            result.Latencies = new Dictionary<string, List<double>>();
-            result.Latencies["total"] = new List<double>();
-            result.Latencies["bgs"] = new List<double>();
-            result.Latencies["decode"] = new List<double>();
-            result.Latencies["pre_process"] = new List<double>();
-            
+
             while (true)
             {   
                 if (!loop)
@@ -258,9 +251,11 @@ namespace VideoPipelineCore
                 result.Latencies["bgs"].Add((endTimeBGS-startTimeBGS).TotalMilliseconds);
 
                 //line detector
-                if (new int[] { 0, 3, 4, 5, 6, 7 }.Intersect(pplConfigs).Any())
+                if (new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.Intersect(pplConfigs).Any())
                 {
                     (counts, occupancy) = lineDetector.updateLineResults(frame, frameIndex, fgmask, foregroundBoxes);
+                    Console.WriteLine("counts: {0}", string.Join(Environment.NewLine, counts));
+                    Console.WriteLine("occupancy: {0}", string.Join(Environment.NewLine, occupancy));
                 }
 
 
@@ -314,19 +309,19 @@ namespace VideoPipelineCore
                 //frame DNN ONNX Yolo
                 if (new int[] { 8 }.Intersect(pplConfigs).Any())
                 {
-                    frameDNNONNXItemList = frameDNNOnnxYolo.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    frameDNNONNXItemList = frameDNNOnnxYolo.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 1, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = frameDNNONNXItemList;
                 }
                 
                 if (new int[] { 9 }.Intersect(pplConfigs).Any())
                 {
-                    maskRCNNONNXItemList = rcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    maskRCNNONNXItemList = rcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 1, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = maskRCNNONNXItemList;
                 }
                 
                 if (new int[] { 10 }.Intersect(pplConfigs).Any())
                 {
-                    fasterRCNNONNXItemList = fasterRcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    fasterRCNNONNXItemList = fasterRcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 1, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = fasterRCNNONNXItemList;
                 }
 
@@ -352,8 +347,8 @@ namespace VideoPipelineCore
                     Dictionary<string, string> kvpairs = new Dictionary<string, string>();
                     foreach (Item it in ItemList)
                     {
-                        if (lines != null && !kvpairs.ContainsKey(it.TriggerLine))
-                            kvpairs.Add(it.TriggerLine, "1");
+                        // if (lines != null && !kvpairs.ContainsKey(it.TriggerLine))
+                        //     kvpairs.Add(it.TriggerLine, "1");
                         Console.WriteLine("Detected: {0}", it.ObjName);
                     }
                     FramePreProcessor.FrameDisplay.updateKVPairs(kvpairs);
@@ -391,19 +386,23 @@ namespace VideoPipelineCore
                 mergePredictions(prediction, FrameDNNOnnxYolo.finalResults);
                 modelName += "_" +  FrameDNNOnnxYolo.modelName;
                 latenciesDict = FrameDNNOnnxYolo.latencies;
+                ORTWrapper.latencies.ToList().ForEach(x => latenciesDict.Add(x.Key, x.Value));
             }
             if (new int[] {9}.Intersect(pplConfigs).Any())
             {
                 mergePredictions(prediction, OnnxWrapper.finalResults);
                 modelName += "_" + MaskRCNNOnnx.modelName;
                 latenciesDict = OnnxWrapper.latencies;
+                ORTWrapper.latencies.ToList().ForEach(x => latenciesDict.Add(x.Key, x.Value));
             }
             if (new int[] {10}.Intersect(pplConfigs).Any())
             {
                 mergePredictions(prediction, OnnxWrapper.finalResults);
                 modelName += "_" + FasterRCNNOnnx.modelName;
                 latenciesDict = OnnxWrapper.latencies;
+                ORTWrapper.latencies.ToList().ForEach(x => latenciesDict.Add(x.Key, x.Value));
             }
+            
             result.object_detection = prediction;
             latenciesDict.ToList().ForEach(x => result.Latencies.Add(x.Key, x.Value));
 

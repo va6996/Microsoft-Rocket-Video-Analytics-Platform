@@ -20,6 +20,7 @@ namespace Wrapper.ORT
         static IYoloConfiguration cfg;
         static InferenceSession session1, session2;
         DNNMode mode = DNNMode.Unknown;
+        public static Dictionary<string, List<double>> latencies = new Dictionary<string, List<double>>();
 
         public ORTWrapper(string modelPath, DNNMode mode)
         {
@@ -39,10 +40,15 @@ namespace Wrapper.ORT
                     session2 = new InferenceSession(modelPath, SessionOptions.MakeSessionOptionWithCudaProvider(0));
                     break;
             }
+            
+            latencies["onnx_pre_process"] = new List<double>();
+            latencies["onnx_process"] = new List<double>();
+            latencies["onnx_post_process"] = new List<double>();
         }
 
         public List<ORTItem> UseApi(Bitmap bitmap, int h, int w)
         {
+            DateTime startTime = DateTime.Now;
             float[] imgData = LoadTensorFromImageFile(bitmap);
 
             var container = new List<NamedOnnxValue>();
@@ -51,20 +57,32 @@ namespace Wrapper.ORT
             container.Add(NamedOnnxValue.CreateFromTensor<float>("input_1", tensor1));
             var tensor2 = new DenseTensor<float>(new float[] { h, w }, new int[] { 1, 2 });
             container.Add(NamedOnnxValue.CreateFromTensor<float>("image_shape", tensor2));
+            DateTime endTime = DateTime.Now;
+            latencies["onnx_pre_process"].Add((endTime-startTime).TotalMilliseconds);
 
             // Run the inference
             switch (mode)
             {
                 case DNNMode.LT:
                 case DNNMode.Frame:
-                    using (var results = session1.Run(container))  // results is an IDisposableReadOnlyCollection<DisposableNamedOnnxValue> container
+                {
+                    DateTime startTimeP = DateTime.Now;
+                    using (var results = session1.Run(container)) // results is an IDisposableReadOnlyCollection<DisposableNamedOnnxValue> container
                     {
+                        DateTime endTimeP = DateTime.Now;
+                        latencies["onnx_process"].Add((endTimeP - startTimeP).TotalMilliseconds);
+
                         List<ORTItem> itemList = PostProcessing(results);
                         return itemList;
                     }
+                }
                 case DNNMode.CC:
+                    DateTime startTimeCC = DateTime.Now;
                     using (var results = session2.Run(container))  // results is an IDisposableReadOnlyCollection<DisposableNamedOnnxValue> container
                     {
+                        DateTime endTimeP = DateTime.Now;
+                        latencies["onnx_process"].Add((endTimeP - startTimeCC).TotalMilliseconds);
+                        
                         List<ORTItem> itemList = PostProcessing(results);
                         return itemList;
                     }
@@ -154,6 +172,7 @@ namespace Wrapper.ORT
 
         static List<ORTItem> PostProcessing(IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results)
         {
+            DateTime startTime = DateTime.Now;
             List<ORTItem> itemList = new List<ORTItem>();
 
             List<float[]> out_boxes = new List<float[]>();
@@ -189,7 +208,8 @@ namespace Wrapper.ORT
                 ORTItem item = new ORTItem((int)box[1], (int)box[0], (int)(box[3] - box[1]), (int)(box[2] - box[0]), out_classes[ibox], cfg.Labels[out_classes[ibox]], out_scores[ibox][out_classes[ibox]], 0, "lineName");
                 itemList.Add(item);
             }
-
+            DateTime endTime = DateTime.Now;
+            latencies["onnx_post_process"].Add((endTime-startTime).TotalMilliseconds);
             return itemList;
         }
 

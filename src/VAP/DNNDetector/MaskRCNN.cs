@@ -58,13 +58,18 @@ namespace DNNDetector
                 // Console.WriteLine("dims are {0}, {1}, {2}, {3}", bbox.X, bbox.Y, bbox.Width, bbox.Height);
                 preValidItems.Add(new Item(bbox));
             }
+            Console.Write("# of prevalid items is {0}", preValidItems.Count);
+            
             List<Item> validObjects = new List<Item>();
 
+            DateTime startTimePP = DateTime.Now;
             //run _category and overlap ratio-based validation
             if (_lines != null)
             {
                 var overlapItems = preValidItems.Select(o => new { Overlap = Utils.Utils.checkLineBboxOverlapRatio(_lines[lineID].Item2, o.X, o.Y, o.Width, o.Height), Bbox_x = o.X + o.Width, Bbox_y = o.Y + o.Height, Distance = this.Distance(_lines[lineID].Item2, o.Center()), Item = o })
                     .Where(o => o.Bbox_x <= _imageWidth && o.Bbox_y <= _imageHeight && o.Overlap >= min_score_for_linebbox_overlap && _category.ContainsKey(o.Item.ObjName)).OrderBy(o => o.Distance);
+                Console.Write("# of overlap items is {0}", overlapItems.Count());
+
                 foreach (var item in overlapItems)
                 {
                     item.Item.TaggedImageData = Utils.Utils.DrawImage(imageByteArray, item.Item.X, item.Item.Y, item.Item.Width, item.Item.Height, bboxColor);
@@ -74,6 +79,7 @@ namespace DNNDetector
                     item.Item.TriggerLineID = lineID;
                     item.Item.Model = modelName;
                     validObjects.Add(item.Item);
+                    resString.Add(item.Item.ObjName);
                     _index++;
                 }
             }
@@ -81,6 +87,8 @@ namespace DNNDetector
             {
                 var overlapItems = preValidItems.Select(o => new { Bbox_x = o.X + o.Width, Bbox_y = o.Y + o.Height, Item = o })
                     .Where(o => o.Bbox_x <= _imageWidth && o.Bbox_y <= _imageHeight && _category.ContainsKey(o.Item.ObjName));
+                Console.Write("# of overlap items is {0}", overlapItems.Count());
+
                 foreach (var item in overlapItems)
                 {
                     item.Item.TaggedImageData = Utils.Utils.DrawImage(imageByteArray, item.Item.X, item.Item.Y, item.Item.Width, item.Item.Height, bboxColor);
@@ -99,19 +107,21 @@ namespace DNNDetector
             //output onnxyolo results
             if (savePictures)
             {
-                //  foreach (Item it in validObjects)
-                //  {
-                //      using (Image image = Image.FromStream(new MemoryStream(it.TaggedImageData)))
-                //      {
-                //
-                //          image.Save(@OutputFolder.OutputFolderMaskRCNNONNX + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
-                //          image.Save(@OutputFolder.OutputFolderAll + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
-                //      }
-                //  }
+                 // foreach (Item it in validObjects)
+                 // {
+                 //     using (Image image = Image.FromStream(new MemoryStream(it.TaggedImageData)))
+                 //     {
+                 //
+                 //         image.Save(@OutputFolder.OutputFolderMaskRCNNONNX + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
+                 //         image.Save(@OutputFolder.OutputFolderAll + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
+                 //     }
+                 // }
                 // byte[] imgBboxes = DrawAllBb(frameIndex, Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx)),
                 //         validObjects, Brushes.Pink);
             }
             finalResults.Add(resString);
+            DateTime endTimePP = DateTime.Now;
+            latencies["post_process"].Add((endTimePP-startTimePP).TotalMilliseconds);
             
             return (validObjects.Count == 0 ? null : validObjects);
         }
