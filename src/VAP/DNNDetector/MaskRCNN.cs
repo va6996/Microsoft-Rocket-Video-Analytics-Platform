@@ -58,7 +58,7 @@ namespace DNNDetector
                 // Console.WriteLine("dims are {0}, {1}, {2}, {3}", bbox.X, bbox.Y, bbox.Width, bbox.Height);
                 preValidItems.Add(new Item(bbox));
             }
-            Console.Write("# of prevalid items is {0}", preValidItems.Count);
+            Console.Write("# of prevalid items is {0}\n", preValidItems.Count);
             
             List<Item> validObjects = new List<Item>();
 
@@ -68,7 +68,7 @@ namespace DNNDetector
             {
                 var overlapItems = preValidItems.Select(o => new { Overlap = Utils.Utils.checkLineBboxOverlapRatio(_lines[lineID].Item2, o.X, o.Y, o.Width, o.Height), Bbox_x = o.X + o.Width, Bbox_y = o.Y + o.Height, Distance = this.Distance(_lines[lineID].Item2, o.Center()), Item = o })
                     .Where(o => o.Bbox_x <= _imageWidth && o.Bbox_y <= _imageHeight && o.Overlap >= min_score_for_linebbox_overlap && _category.ContainsKey(o.Item.ObjName)).OrderBy(o => o.Distance);
-                Console.Write("# of overlap items is {0}", overlapItems.Count());
+                Console.Write("# of overlap items is {0}\n", overlapItems.Count());
 
                 foreach (var item in overlapItems)
                 {
@@ -87,7 +87,7 @@ namespace DNNDetector
             {
                 var overlapItems = preValidItems.Select(o => new { Bbox_x = o.X + o.Width, Bbox_y = o.Y + o.Height, Item = o })
                     .Where(o => o.Bbox_x <= _imageWidth && o.Bbox_y <= _imageHeight && _category.ContainsKey(o.Item.ObjName));
-                Console.Write("# of overlap items is {0}", overlapItems.Count());
+                Console.Write("# of overlap items is {0}\n", overlapItems.Count());
 
                 foreach (var item in overlapItems)
                 {

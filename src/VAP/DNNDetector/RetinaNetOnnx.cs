@@ -18,14 +18,14 @@ using Wrapper.ORT;
 
 namespace DNNDetector
 {
-    public class FasterRCNNOnnx : OnnxWrapper
+    public class RetinaNetOnnx : OnnxWrapper
     {
         private static int _imageWidth, _imageHeight, _index;
-        public static string modelName = "FasterRCnnOnnx";
+        public static string modelName = "RetinaNet";
 
         byte[] imageByteArray;
 
-        public FasterRCNNOnnx(List<Tuple<string, int[]>> lines, string modelName, DNNMode mode) : base(modelName, mode)
+        public RetinaNetOnnx(List<Tuple<string, int[]>> lines, string modelName, DNNMode mode) : base(modelName, mode)
         {
             _lines = lines;
         }
@@ -33,8 +33,8 @@ namespace DNNDetector
         protected override List<NamedOnnxValue> getContainer(float[] imgData)
         {
             var container = new List<NamedOnnxValue>();
-            var tensor1 = new DenseTensor<float>(imgData, new int[] {3, 416, 416 });
-            container.Add(NamedOnnxValue.CreateFromTensor<float>("image", tensor1));
+            var tensor1 = new DenseTensor<float>(imgData, new int[] { 1, 3, 480, 640 });
+            container.Add(NamedOnnxValue.CreateFromTensor<float>("input", tensor1));
             return container;
         }
         
@@ -59,7 +59,7 @@ namespace DNNDetector
                 preValidItems.Add(new Item(bbox));
             }
             Console.Write("# of prevalid items is {0}\n", preValidItems.Count);
-
+            
             List<Item> validObjects = new List<Item>();
 
             DateTime startTimePP = DateTime.Now;
@@ -107,15 +107,15 @@ namespace DNNDetector
             //output onnxyolo results
             if (savePictures)
             {
-                //  foreach (Item it in validObjects)
-                //  {
-                //      using (Image image = Image.FromStream(new MemoryStream(it.TaggedImageData)))
-                //      {
-                //
-                //          image.Save(@OutputFolder.OutputFolderFasterRCNNONNX + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
-                //          image.Save(@OutputFolder.OutputFolderAll + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
-                //      }
-                //  }
+                 // foreach (Item it in validObjects)
+                 // {
+                 //     using (Image image = Image.FromStream(new MemoryStream(it.TaggedImageData)))
+                 //     {
+                 //
+                 //         image.Save(@OutputFolder.OutputFolderMaskRCNNONNX + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
+                 //         image.Save(@OutputFolder.OutputFolderAll + $"frame-{frameIndex}-ONNX-{it.Confidence}.jpg", ImageFormat.Jpeg);
+                 //     }
+                 // }
                 // byte[] imgBboxes = DrawAllBb(frameIndex, Utils.Utils.ImageToByteBmp(OpenCvSharp.Extensions.BitmapConverter.ToBitmap(frameOnnx)),
                 //         validObjects, Brushes.Pink);
             }
@@ -146,7 +146,7 @@ namespace DNNDetector
                 canvas = Utils.Utils.DrawImage(canvas, item.X, item.Y, item.Width, item.Height, bboxColor);
             }
             string frameIndexString = frameIndex.ToString("000000.##");
-            File.WriteAllBytes(@OutputFolder.OutputFolderFasterRCNNONNX + $@"frame{frameIndexString}-Raw.jpg", canvas);
+            File.WriteAllBytes(@OutputFolder.OutputFolderMaskRCNNONNX + $@"frame{frameIndexString}-Raw.jpg", canvas);
 
             return canvas;
         }

@@ -33,6 +33,7 @@ namespace VideoPipelineCore
             Latencies["bgs"] = new List<double>();
             Latencies["decode"] = new List<double>();
             Latencies["pre_process"] = new List<double>();
+            Latencies["cumulative_time"] = new List<double>();
         }
 
         public string Serialize()
@@ -45,6 +46,9 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
+            
+            DateTime startTime = DateTime.Now;
+            
             if (args.Length < 4)
             {
                 Console.WriteLine(args.Length);
@@ -68,8 +72,10 @@ namespace VideoPipelineCore
             int SAMPLING_FACTOR = int.Parse(args[2]);
             double RESOLUTION_FACTOR = double.Parse(args[3]);
 
+            string testName = args[5];
+            
             HashSet<string> category = new HashSet<string>();
-            for (int i = 5; i < args.Length; i++)
+            for (int i = 6; i < args.Length; i++)
             {
                 category.Add(args[i]);
             }
@@ -188,6 +194,13 @@ namespace VideoPipelineCore
             {
                 fasterRcnnOnnx = new FasterRCNNOnnx(convLines, "fasterrcnn", Wrapper.ORT.DNNMode.Frame);
             }
+            
+            RetinaNetOnnx retinaNetOnnx = null;
+            List<Item> retinaNetOnnxItemList = null;
+            if (new int[] { 11 }.Intersect(pplConfigs).Any())
+            {
+                retinaNetOnnx = new RetinaNetOnnx(convLines, "retinanet", Wrapper.ORT.DNNMode.Frame);
+            }
 
             //-----Call ML models deployed on Azure Machine Learning Workspace-----
             AMLCaller amlCaller = null;
@@ -215,7 +228,6 @@ namespace VideoPipelineCore
             int iter = 0;
 
             Result result = new Result();
-
             while (true)
             {   
                 if (!loop)
@@ -225,6 +237,7 @@ namespace VideoPipelineCore
                         break;
                     }
                 }
+                Console.WriteLine("came till here");
 
                 //decoder
                 DateTime startTimeDecode = DateTime.Now;
@@ -251,7 +264,7 @@ namespace VideoPipelineCore
                 result.Latencies["bgs"].Add((endTimeBGS-startTimeBGS).TotalMilliseconds);
 
                 //line detector
-                if (new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 }.Intersect(pplConfigs).Any())
+                if (new int[] { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11 }.Intersect(pplConfigs).Any())
                 {
                     (counts, occupancy) = lineDetector.updateLineResults(frame, frameIndex, fgmask, foregroundBoxes);
                     Console.WriteLine("counts: {0}", string.Join(Environment.NewLine, counts));
@@ -309,20 +322,26 @@ namespace VideoPipelineCore
                 //frame DNN ONNX Yolo
                 if (new int[] { 8 }.Intersect(pplConfigs).Any())
                 {
-                    frameDNNONNXItemList = frameDNNOnnxYolo.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 1, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    frameDNNONNXItemList = frameDNNOnnxYolo.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = frameDNNONNXItemList;
                 }
                 
                 if (new int[] { 9 }.Intersect(pplConfigs).Any())
                 {
-                    maskRCNNONNXItemList = rcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 1, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    maskRCNNONNXItemList = rcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = maskRCNNONNXItemList;
                 }
                 
                 if (new int[] { 10 }.Intersect(pplConfigs).Any())
                 {
-                    fasterRCNNONNXItemList = fasterRcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 1, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    fasterRCNNONNXItemList = fasterRcnnOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
                     ItemList = fasterRCNNONNXItemList;
+                }
+                
+                if (new int[] { 11 }.Intersect(pplConfigs).Any())
+                {
+                    retinaNetOnnxItemList = retinaNetOnnx.Run(frame, frameIndex, Utils.Utils.CatHashSet2Dict(category), System.Drawing.Brushes.Pink, 0, DNNConfig.MIN_SCORE_FOR_LINEBBOX_OVERLAP_SMALL, true);
+                    ItemList = retinaNetOnnxItemList;
                 }
 
                 //Azure Machine Learning
@@ -360,6 +379,7 @@ namespace VideoPipelineCore
                 double latency = (DateTime.Now - prevTime).TotalMilliseconds;
                 double avgFps = 1000 * (long)frameIndex / latency;
                 result.Latencies["total"].Add(latency);
+                result.Latencies["cumulative_time"].Add((DateTime.Now - startTime).TotalMilliseconds);
                 Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
             }
@@ -409,7 +429,7 @@ namespace VideoPipelineCore
             
             Console.WriteLine(result.Serialize());
             string videoName = videoUrl.Split("/").Last().Split(".").First();
-            File.WriteAllText(@"benchmarks/rocket" + modelName  + "_" + videoName +".json", result.Serialize());
+            File.WriteAllText(@"benchmarks/" + testName + modelName  + "_" + videoName +".json", result.Serialize());
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)
