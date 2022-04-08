@@ -34,6 +34,7 @@ namespace DNNDetector
         {
             var container = new List<NamedOnnxValue>();
             var tensor1 = new DenseTensor<float>(imgData, new int[] { 1, 3, 480, 640 });
+            Console.WriteLine("tensor value is {0}", string.Join(",", tensor1));
             container.Add(NamedOnnxValue.CreateFromTensor<float>("input", tensor1));
             return container;
         }
@@ -151,13 +152,61 @@ namespace DNNDetector
             return canvas;
         }
         
+        public List<int> ColorFromHSV(double hue, double saturation, double value)
+        {
+            int hi = Convert.ToInt32(Math.Floor(hue / 60)) % 6;
+            double f = hue / 60 - Math.Floor(hue / 60);
+
+            value = value * 255;
+            int v = Convert.ToInt32(value);
+            int p = Convert.ToInt32(value * (1 - saturation));
+            int q = Convert.ToInt32(value * (1 - f * saturation));
+            int t = Convert.ToInt32(value * (1 - (1 - f) * saturation));
+
+            return hi switch
+            {
+                0 => new List<int>{ v, t, p},
+                1 => new List<int>{q, v, p},
+                2 => new List<int>{ p, v, t},
+                3 => new List<int>{ p, q, v},
+                4 => new List<int>{ t, p, v},
+                _ => new List<int>{v, p, q}
+            };
+        }
+
+        public List<int> getPalette()
+        {
+            List<int> palette = new List<int>();
+            palette.Add(0);
+            palette.Add(0);
+            palette.Add(0);
+
+            var ybc = new Yolov3BaseConfig();
+            for (int i = 3; i < ybc.Labels.Length; i++)
+            {
+                List<int> color = ColorFromHSV((i*1.0 / ybc.Labels.Length), 0.75, 0.75);
+                for (int j = 0; j < 3; j++)
+                {
+                    palette.Add(color[j]*255);
+                }
+            }
+
+            return palette;
+        }
+        
         protected override List<ORTItem> PostProcessing(IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results)
         {
             List<ORTItem> itemList = new List<ORTItem>();
-            
+            Console.WriteLine("result count is {0}", results.Count);
+            Console.WriteLine("count at 0 is {0}", results.AsEnumerable().Count());
+
             var boxes = results.AsEnumerable().ElementAt(0).AsTensor<float>();
             var indices = results.AsEnumerable().ElementAt(1).AsTensor<Int64>();
             var scores = results.AsEnumerable().ElementAt(2).AsTensor<float>();
+            
+            Console.WriteLine("box size {0}", boxes.Length);
+            Console.WriteLine("indices size {0}", indices.Length);
+            Console.WriteLine("scores size {0}", scores.Length);
             
             int nbox = indices.Count();
 
@@ -174,8 +223,8 @@ namespace DNNDetector
 
         protected override float[] LoadTensorFromImageFile(Bitmap bitmap)
         {
-            RGBtoBGR(bitmap);
-            int iw = bitmap.Width, ih = bitmap.Height, w = 416, h = 416, nw, nh;
+            // RGBtoBGR(bitmap);
+            int iw = bitmap.Width, ih = bitmap.Height, w = 640, h = 480, nw, nh;
 
             float scale = Math.Min((float)w/iw, (float)h/ih);
             nw = (int)(iw * scale);
@@ -191,10 +240,24 @@ namespace DNNDetector
             }
             var imgData = boxedImg.ToNDArray(flat: false, copy: true);
 
-            imgData /= 1.0;
+            var means = new double[] {0.485, 0.456, 0.406};
+            var npMeans = np.array(means);
+
+            var std = new double[] {0.229, 0.224, 0.225};
+            var npStd = np.array(std);
+            
+            imgData /= 255.0;
             imgData = np.transpose(imgData, new int[] { 0, 3, 1, 2 });
+            Console.WriteLine("Shape is {0}", string.Join(",", imgData.shape));
+            foreach (var i in new int[]{0,1,2})
+            {
+                imgData[0, i] = (imgData[0, i] - npMeans[i]) / npStd[i];
+            }
+            Console.WriteLine("Shape is {0}", string.Join(",", imgData[0]));
+
             imgData = imgData.reshape(1, 3 * w * h);
 
+            
             double[] doubleArray = imgData[0].ToArray<double>();
             float[] floatArray = new float[doubleArray.Length];
             for (int i = 0; i < doubleArray.Length; i++)
