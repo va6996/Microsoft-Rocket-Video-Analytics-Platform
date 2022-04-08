@@ -197,28 +197,38 @@ namespace DNNDetector
         protected override List<ORTItem> PostProcessing(IDisposableReadOnlyCollection<DisposableNamedOnnxValue> results)
         {
             List<ORTItem> itemList = new List<ORTItem>();
-            Console.WriteLine("result count is {0}", results.Count);
-            Console.WriteLine("count at 0 is {0}", results.AsEnumerable().Count());
 
-            var boxes = results.AsEnumerable().ElementAt(0).AsTensor<float>();
-            var indices = results.AsEnumerable().ElementAt(1).AsTensor<Int64>();
-            var scores = results.AsEnumerable().ElementAt(2).AsTensor<float>();
-            
-            Console.WriteLine("box size {0}", boxes.Length);
-            Console.WriteLine("indices size {0}", indices.Length);
-            Console.WriteLine("scores size {0}", scores.Length);
-            
-            int nbox = indices.Count();
+            var output = results.AsEnumerable().ElementAt(0).AsTensor<float>();
 
-            for (int ibox = 0; ibox < nbox; ibox++)
-            { 
-                //output
-                ORTItem item = new ORTItem((int)boxes[ibox,1], (int)boxes[ibox,0], (int)(boxes[ibox,3]-boxes[ibox,1]),
-                    (int)(boxes[ibox,2]-boxes[ibox,0]), (int)indices[ibox], cfg.Labels[indices[ibox]+1], scores[ibox]);
-                itemList.Add(item);
+            Console.WriteLine("dimensions are {0}", string.Join(",", output.Dimensions.ToArray()));
+
+            for (int i = 0; i < 640; i++)
+            {
+                for (int j = 0; j < 480; j++)
+                {
+                    float max = 0;
+                    int idx = -1;
+                    
+                    for (int k = 1; k < 21; k++)
+                    {
+                        if (max < output[0,k, j, i])
+                        {
+                            max = output[0, k, j, i];
+                            idx = k;
+                        }
+                    }
+
+                    if (idx != 0)
+                    {
+                        ORTItem item = new ORTItem(i, j, 1,1, idx, cfg.Labels[idx], output[0,idx, j, i]);
+                        itemList.Add(item);
+                    }
+                    
+                }
             }
 
             return itemList;
+            
         }
 
         protected override float[] LoadTensorFromImageFile(Bitmap bitmap)
