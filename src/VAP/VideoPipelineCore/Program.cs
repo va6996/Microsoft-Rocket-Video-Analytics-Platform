@@ -46,14 +46,12 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
-            Simulator simulator = new Simulator(500, 500);
+            Simulator simulator = new Simulator(500, 400);
             
-            Console.WriteLine("Current Timestamp is {0}", simulator.getCurrentTimestamp());
             DateTime startTime = DateTime.Now;
             
             if (args.Length < 4)
             {
-                Console.WriteLine(args.Length);
                 Console.WriteLine("Usage: <exe> <video url> <cfg file> <samplingFactor> <resolutionFactor> <category1> <category2> ...");
                 return;
             }
@@ -70,7 +68,6 @@ namespace VideoPipelineCore
                 videoUrl = @"media/" + args[0];
             }
             string lineFile = @"cfg/" + args[1];
-            Console.WriteLine(args[3]);
             int SAMPLING_FACTOR = int.Parse(args[2]);
             double RESOLUTION_FACTOR = double.Parse(args[3]);
 
@@ -232,6 +229,8 @@ namespace VideoPipelineCore
             Result result = new Result();
             while (true)
             {   
+                Console.WriteLine("Current Timestamp is {0}", simulator.getCurrentTimestamp());
+
                 if (!loop)
                 {
                     if (!isVideoStream && frameIndex >= videoTotalFrame)
