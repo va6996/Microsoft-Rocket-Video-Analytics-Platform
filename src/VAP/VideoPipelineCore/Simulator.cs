@@ -53,11 +53,11 @@ namespace VideoPipelineCore
             this.frameCount++;
 
             // Drop if there is a significant spillover
-            while (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)
+            while (this.currentTimestamp > ((this.frameCount) * this.frameInterval))
             {
                 this.DropFrames();
-                Console.WriteLine("Dropping frame since current timestamp is {0} and frame arrival was {1}",
-                    this.currentTimestamp, (this.frameCount - 1) * this.frameInterval);
+                Console.WriteLine("Dropping frame since current timestamp is {0} and next frame arrival was {1}",
+                    this.currentTimestamp, (this.frameCount) * this.frameInterval);
                 this.frameCount++;
             }
         }

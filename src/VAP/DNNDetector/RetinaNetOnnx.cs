@@ -258,12 +258,12 @@ namespace DNNDetector
             
             imgData /= 255.0;
             imgData = np.transpose(imgData, new int[] { 0, 3, 1, 2 });
-            Console.WriteLine("Shape is {0}", string.Join(",", imgData.shape));
+            // Console.WriteLine("Shape is {0}", string.Join(",", imgData.shape));
             foreach (var i in new int[]{0,1,2})
             {
                 imgData[0, i] = (imgData[0, i] - npMeans[i]) / npStd[i];
             }
-            Console.WriteLine("Shape is {0}", string.Join(",", imgData[0]));
+            // Console.WriteLine("Shape is {0}", string.Join(",", imgData[0]));
 
             imgData = imgData.reshape(1, 3 * w * h);
 
