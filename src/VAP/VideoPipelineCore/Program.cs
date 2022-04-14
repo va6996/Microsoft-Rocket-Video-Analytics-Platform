@@ -47,6 +47,8 @@ namespace VideoPipelineCore
         {
             //parse arguments
             Simulator simulator = new Simulator(500, 500);
+            
+            Console.WriteLine("Current Timestamp is {0}", simulator.getCurrentTimestamp());
             DateTime startTime = DateTime.Now;
             
             if (args.Length < 4)
@@ -237,7 +239,6 @@ namespace VideoPipelineCore
                         break;
                     }
                 }
-                Console.WriteLine("came till here");
 
                 //decoder
                 DateTime startTimeDecode = DateTime.Now;

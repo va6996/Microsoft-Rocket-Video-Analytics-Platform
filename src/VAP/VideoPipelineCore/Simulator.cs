@@ -35,6 +35,8 @@ namespace VideoPipelineCore
             if (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)
             {
                 this.DropFrames();
+                Console.WriteLine("Dropping frame since current timestamp is {0} and frame arrival was {1}",
+                    this.currentTimestamp, (this.frameCount - 1) * this.frameInterval);
             }
             else
             {
@@ -48,8 +50,15 @@ namespace VideoPipelineCore
             while (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)
             {
                 this.DropFrames();
+                Console.WriteLine("Dropping frame since current timestamp is {0} and frame arrival was {1}",
+                    this.currentTimestamp, (this.frameCount - 1) * this.frameInterval);
                 this.frameCount++;
             }
+        }
+        
+        public int getCurrentTimestamp()
+        {
+            return this.currentTimestamp;
         }
 
         public void printStatistics()
