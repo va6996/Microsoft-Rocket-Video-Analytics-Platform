@@ -46,7 +46,7 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
-            
+            Simulator simulator = new Simulator(500, 500);
             DateTime startTime = DateTime.Now;
             
             if (args.Length < 4)
@@ -382,6 +382,8 @@ namespace VideoPipelineCore
                 result.Latencies["cumulative_time"].Add((DateTime.Now - startTime).TotalMilliseconds);
                 Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
+                
+                simulator.simulateProcessing((int)latency);
             }
 
             string modelName = "";
@@ -427,9 +429,11 @@ namespace VideoPipelineCore
             latenciesDict.ToList().ForEach(x => result.Latencies.Add(x.Key, x.Value));
 
             
-            Console.WriteLine(result.Serialize());
+            // Console.WriteLine(result.Serialize());
             string videoName = videoUrl.Split("/").Last().Split(".").First();
             File.WriteAllText(@"benchmarks/" + testName + modelName  + "_" + videoName +".json", result.Serialize());
+            
+            simulator.printStatistics();
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)
