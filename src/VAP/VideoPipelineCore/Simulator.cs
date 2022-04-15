@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 
 namespace VideoPipelineCore
 {
@@ -11,6 +12,7 @@ namespace VideoPipelineCore
         private readonly int frameInterval;
         private int frameCount;
         private List<int> latencies;
+        public string results;
 
         private int drops;
 
@@ -19,6 +21,7 @@ namespace VideoPipelineCore
         public Simulator(int slo, int frameInterval)
         {
             this.latencies = new List<int>();
+            results = "";
             this.currentTimestamp = 0;
             this.cumulativeLatency = 0;
             this.frameCount = 1;
@@ -67,15 +70,21 @@ namespace VideoPipelineCore
             return this.currentTimestamp;
         }
 
-        public void printStatistics()
+        public void calculateStatistics()
         {
             int min = latencies.Min(), max = latencies.Max();
-            Console.WriteLine("Processed {0} frames.", this.frameCount);
-            Console.WriteLine("Dropped {0} frames.", this.drops);
-            Console.WriteLine("Average serving latency was {0} (of non-dropped frames).",
-                this.cumulativeLatency / (this.frameCount - this.drops));
-            Console.WriteLine("Min latency was {0}.", min);
-            Console.WriteLine("Max latency was {0}.", max);
+
+            results += $"Processed {this.frameCount} frames.\n";
+            results += $"Dropped {this.drops} frames.\n";
+            results += $"Average serving latency was {this.cumulativeLatency / (this.frameCount - this.drops)} " +
+                       $"(of non-dropped frames).\n";
+            results += $"Min latency was {min}.\n";
+            results += $"Max latency was {max}.\n";
+        }
+        
+        public string Serialize()
+        {
+            return JsonSerializer.Serialize(this);
         }
     }
 }

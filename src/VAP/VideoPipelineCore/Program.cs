@@ -433,7 +433,8 @@ namespace VideoPipelineCore
             string videoName = videoUrl.Split("/").Last().Split(".").First();
             File.WriteAllText(@"benchmarks/" + testName + modelName  + "_" + videoName +".json", result.Serialize());
             
-            simulator.printStatistics();
+            simulator.calculateStatistics();
+            File.WriteAllText(@"./" + testName + modelName  + "_" + videoName +".json", simulator.Serialize());
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)
