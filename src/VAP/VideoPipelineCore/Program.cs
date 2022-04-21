@@ -46,8 +46,8 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
-            Simulator droppingEnabledSimulator = new Simulator(500, 400, true);
-            Simulator droppingDisabledSimulator = new Simulator(500, 400, false);
+            Simulator droppingEnabledSimulator = new Simulator(300, 300, true);
+            Simulator droppingDisabledSimulator = new Simulator(300, 300, false);
             
             DateTime startTime = DateTime.Now;
             
@@ -75,7 +75,7 @@ namespace VideoPipelineCore
             string testName = args[5];
             
             HashSet<string> category = new HashSet<string>();
-            for (int i = 6; i < args.Length; i++)
+            for (int i = 5; i < args.Length; i++)
             {
                 category.Add(args[i]);
             }
