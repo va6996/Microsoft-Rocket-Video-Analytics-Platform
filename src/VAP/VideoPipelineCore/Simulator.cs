@@ -7,29 +7,30 @@ namespace VideoPipelineCore
 {
     public class Simulator
     {
-        private readonly int slo;
-        private int currentTimestamp;
-        private readonly int frameInterval;
-        private int frameCount;
-        private List<int> nonDroppedLatencies;
-        private List<int> allLatencies;
-        private List<int> queueSize;
-        public string results;
-        private readonly bool isActiveFrameDroppingEnabled;
+        private int slo { get; set; }
+        private int currentTimestamp { get; set; }
+        private int frameInterval { get; set; }
+        private int frameCount { get; set; }
+        private List<int> nonDroppedLatencies { get; set; }
+        private List<int> allLatencies { get; set; }
+        private List<int> queueSize { get; set; }
+        public string results { get; set; }
+        private bool isFrameSkippingEnabled { get; set; }
 
-        private int drops;
-        private int skips;
+        private int drops { get; set; }
+        private int skips { get; set; }
         
-        public Simulator(int slo, int frameInterval, bool isActiveFrameDroppingEnabled)
+        public Simulator(int slo, int frameInterval, bool isFrameSkippingEnabled)
         {
             this.nonDroppedLatencies = new List<int>();
             this.allLatencies = new List<int>();
             this.queueSize = new List<int>();
-            this.isActiveFrameDroppingEnabled = isActiveFrameDroppingEnabled;
+            this.isFrameSkippingEnabled = isFrameSkippingEnabled;
             results = "";
             this.currentTimestamp = 0;
             this.frameCount = 1;
             this.drops = 0;
+            this.skips = 0;
             this.frameInterval = frameInterval;
             this.slo = slo;
         }
@@ -48,7 +49,8 @@ namespace VideoPipelineCore
         {
             this.currentTimestamp += latency;
             allLatencies.Add(latency);
-            
+            queueSize.Add((currentTimestamp/frameInterval - frameCount));
+
             // Drop current processing frame
             if (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)
             {
@@ -62,11 +64,10 @@ namespace VideoPipelineCore
                 nonDroppedLatencies.Add(latency);
             }
 
-            queueSize.Add((currentTimestamp/frameInterval - frameCount));
             this.frameCount++;
 
             // Drop if there is a significant spillover
-            while (isActiveFrameDroppingEnabled && this.currentTimestamp > ((this.frameCount) * this.frameInterval))
+            while (isFrameSkippingEnabled && this.currentTimestamp > ((this.frameCount) * this.frameInterval))
             {
                 this.SkipFrames();
                 Console.WriteLine("Skipping frame since current timestamp is {0} and next frame arrival was {1}",
