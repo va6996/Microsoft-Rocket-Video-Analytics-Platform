@@ -7,18 +7,18 @@ namespace VideoPipelineCore
 {
     public class Simulator
     {
-        private int slo { get; set; }
-        private int currentTimestamp { get; set; }
-        private int frameInterval { get; set; }
-        private int frameCount { get; set; }
-        private List<int> nonDroppedLatencies { get; set; }
-        private List<int> allLatencies { get; set; }
-        private List<int> queueSize { get; set; }
+        public int slo { get; set; }
+        public int currentTimestamp { get; set; }
+        public int frameInterval { get; set; }
+        public int frameCount { get; set; }
+        public List<int> nonDroppedLatencies { get; set; }
+        public List<int> allLatencies { get; set; }
+        public List<int> queueSize { get; set; }
         public string results { get; set; }
-        private bool isFrameSkippingEnabled { get; set; }
+        public bool isFrameSkippingEnabled { get; set; }
 
-        private int drops { get; set; }
-        private int skips { get; set; }
+        public int drops { get; set; }
+        public int skips { get; set; }
         
         public Simulator(int slo, int frameInterval, bool isFrameSkippingEnabled)
         {
@@ -49,14 +49,14 @@ namespace VideoPipelineCore
         {
             this.currentTimestamp += latency;
             allLatencies.Add(latency);
-            queueSize.Add((currentTimestamp/frameInterval - frameCount));
+            queueSize.Add((currentTimestamp/frameInterval - frameCount - 1));
 
             // Drop current processing frame
             if (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)
             {
                 this.DropFrames();
-                Console.WriteLine("Dropping frame since current timestamp is {0} and frame arrival was {1}",
-                    this.currentTimestamp, (this.frameCount - 1) * this.frameInterval);
+                Console.WriteLine("Dropping frame since current timestamp is {0} and frame slo was {1}",
+                    this.currentTimestamp, (this.frameCount - 1) * this.frameInterval + this.slo);
             }
             else 
             {

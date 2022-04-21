@@ -46,8 +46,8 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
-            Simulator droppingEnabledSimulator = new Simulator(300, 300, true);
-            Simulator droppingDisabledSimulator = new Simulator(300, 300, false);
+            Simulator skippingEnabledSimulator = new Simulator(300, 300, true);
+            Simulator skippingDisabledSimulator = new Simulator(300, 300, false);
             
             DateTime startTime = DateTime.Now;
             
@@ -230,7 +230,7 @@ namespace VideoPipelineCore
             Result result = new Result();
             while (true)
             {   
-                Console.WriteLine("Current Timestamp is {0}", droppingEnabledSimulator.getCurrentTimestamp());
+                Console.WriteLine("Current Timestamp is {0}", skippingEnabledSimulator.getCurrentTimestamp());
 
                 if (!loop)
                 {
@@ -384,8 +384,8 @@ namespace VideoPipelineCore
                 Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
                 
-                droppingEnabledSimulator.simulateProcessing((int)latency);
-                droppingDisabledSimulator.simulateProcessing((int)latency);
+                skippingEnabledSimulator.simulateProcessing((int)latency);
+                skippingDisabledSimulator.simulateProcessing((int)latency);
             }
 
             string modelName = "";
@@ -435,19 +435,19 @@ namespace VideoPipelineCore
             string videoName = videoUrl.Split("/").Last().Split(".").First();
             File.WriteAllText(@"benchmarks/" + testName + modelName  + "_" + videoName +".json", result.Serialize());
             
-            droppingEnabledSimulator.calculateStatistics();
-            File.WriteAllText(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".json", droppingEnabledSimulator.Serialize());
+            skippingEnabledSimulator.calculateStatistics();
+            File.WriteAllText(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".json", skippingEnabledSimulator.Serialize());
             string[] resultlines =
             {
-                droppingEnabledSimulator.results
+                skippingEnabledSimulator.results
             };
             File.WriteAllLinesAsync(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".log", resultlines);
             
-            droppingDisabledSimulator.calculateStatistics();
-            File.WriteAllText(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".json", droppingEnabledSimulator.Serialize());
+            skippingDisabledSimulator.calculateStatistics();
+            File.WriteAllText(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".json", skippingDisabledSimulator.Serialize());
             string[] resultlines1 =
             {
-                droppingEnabledSimulator.results
+                skippingDisabledSimulator.results
             };
             File.WriteAllLinesAsync(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".log", resultlines1);
         }
