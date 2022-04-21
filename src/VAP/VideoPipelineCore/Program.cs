@@ -46,7 +46,8 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
-            Simulator simulator = new Simulator(500, 400);
+            Simulator droppingEnabledSimulator = new Simulator(500, 400, true);
+            Simulator droppingDisabledSimulator = new Simulator(500, 400, false);
             
             DateTime startTime = DateTime.Now;
             
@@ -229,7 +230,7 @@ namespace VideoPipelineCore
             Result result = new Result();
             while (true)
             {   
-                Console.WriteLine("Current Timestamp is {0}", simulator.getCurrentTimestamp());
+                Console.WriteLine("Current Timestamp is {0}", droppingEnabledSimulator.getCurrentTimestamp());
 
                 if (!loop)
                 {
@@ -383,7 +384,8 @@ namespace VideoPipelineCore
                 Console.WriteLine("FrameID: {0} Latency:{1}", frameIndex, latency);
 		        prevTime = DateTime.Now;
                 
-                simulator.simulateProcessing((int)latency);
+                droppingEnabledSimulator.simulateProcessing((int)latency);
+                droppingDisabledSimulator.simulateProcessing((int)latency);
             }
 
             string modelName = "";
@@ -433,8 +435,21 @@ namespace VideoPipelineCore
             string videoName = videoUrl.Split("/").Last().Split(".").First();
             File.WriteAllText(@"benchmarks/" + testName + modelName  + "_" + videoName +".json", result.Serialize());
             
-            simulator.calculateStatistics();
-            File.WriteAllText(@"./" + testName + modelName  + "_" + videoName +".json", simulator.Serialize());
+            droppingEnabledSimulator.calculateStatistics();
+            File.WriteAllText(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".json", droppingEnabledSimulator.Serialize());
+            string[] resultlines =
+            {
+                droppingEnabledSimulator.results
+            };
+            File.WriteAllLinesAsync(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".log", resultlines);
+            
+            droppingDisabledSimulator.calculateStatistics();
+            File.WriteAllText(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".json", droppingEnabledSimulator.Serialize());
+            string[] resultlines1 =
+            {
+                droppingEnabledSimulator.results
+            };
+            File.WriteAllLinesAsync(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".log", resultlines1);
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)

@@ -11,19 +11,23 @@ namespace VideoPipelineCore
         private int currentTimestamp;
         private readonly int frameInterval;
         private int frameCount;
-        private List<int> latencies;
+        private List<int> nonDroppedLatencies;
+        private List<int> allLatencies;
+        private List<int> queueSize;
         public string results;
+        private readonly bool isActiveFrameDroppingEnabled;
 
         private int drops;
-
-        private int cumulativeLatency;
-
-        public Simulator(int slo, int frameInterval)
+        private int skips;
+        
+        public Simulator(int slo, int frameInterval, bool isActiveFrameDroppingEnabled)
         {
-            this.latencies = new List<int>();
+            this.nonDroppedLatencies = new List<int>();
+            this.allLatencies = new List<int>();
+            this.queueSize = new List<int>();
+            this.isActiveFrameDroppingEnabled = isActiveFrameDroppingEnabled;
             results = "";
             this.currentTimestamp = 0;
-            this.cumulativeLatency = 0;
             this.frameCount = 1;
             this.drops = 0;
             this.frameInterval = frameInterval;
@@ -34,11 +38,16 @@ namespace VideoPipelineCore
         {
             drops++;
         }
+        
+        void SkipFrames()
+        {
+            skips++;
+        }
 
         public void simulateProcessing(int latency)
         {
             this.currentTimestamp += latency;
-            latencies.Add(latency);
+            allLatencies.Add(latency);
             
             // Drop current processing frame
             if (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)
@@ -47,19 +56,20 @@ namespace VideoPipelineCore
                 Console.WriteLine("Dropping frame since current timestamp is {0} and frame arrival was {1}",
                     this.currentTimestamp, (this.frameCount - 1) * this.frameInterval);
             }
-            else
+            else 
             {
                 this.currentTimestamp = this.frameCount * this.frameInterval;
-                this.cumulativeLatency += latency;
+                nonDroppedLatencies.Add(latency);
             }
 
+            queueSize.Add((currentTimestamp/frameInterval - frameCount));
             this.frameCount++;
 
             // Drop if there is a significant spillover
-            while (this.currentTimestamp > ((this.frameCount) * this.frameInterval))
+            while (isActiveFrameDroppingEnabled && this.currentTimestamp > ((this.frameCount) * this.frameInterval))
             {
-                this.DropFrames();
-                Console.WriteLine("Dropping frame since current timestamp is {0} and next frame arrival was {1}",
+                this.SkipFrames();
+                Console.WriteLine("Skipping frame since current timestamp is {0} and next frame arrival was {1}",
                     this.currentTimestamp, (this.frameCount) * this.frameInterval);
                 this.frameCount++;
             }
@@ -72,14 +82,18 @@ namespace VideoPipelineCore
 
         public void calculateStatistics()
         {
-            int min = latencies.Min(), max = latencies.Max();
+            int min = nonDroppedLatencies.Min(), max = nonDroppedLatencies.Max();
 
             results += $"Processed {this.frameCount} frames.\n";
             results += $"Dropped {this.drops} frames.\n";
-            results += $"Average serving latency was {this.cumulativeLatency / (this.frameCount - this.drops)} " +
-                       $"(of non-dropped frames).\n";
+            results += $"Skipped {this.skips} frames.\n";
+            results += $"Average serving latency was {nonDroppedLatencies.Sum() / (frameCount - drops - skips)} " +
+                       $"of non-dropped/skipped frame.\n ";
+            results += $"Average latency across all frames is {allLatencies.Sum() / allLatencies.Count}.\n";
             results += $"Min latency was {min}.\n";
             results += $"Max latency was {max}.\n";
+            results += $"Queue lengths at end of processing each frame were as follows:\n" +
+                       $"[{string.Join(", ", queueSize)}].\n";
         }
         
         public string Serialize()
