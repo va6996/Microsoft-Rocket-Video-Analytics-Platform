@@ -20,6 +20,9 @@ namespace VideoPipelineCore
         public int drops { get; set; }
         public int skips { get; set; }
         
+        public string modelName { get; set; }
+        public string experimentName { get; set; }
+        
         public Simulator(int slo, int frameInterval, bool isFrameSkippingEnabled)
         {
             this.nonDroppedLatencies = new List<int>();
@@ -49,7 +52,7 @@ namespace VideoPipelineCore
         {
             this.currentTimestamp += latency;
             allLatencies.Add(latency);
-            queueSize.Add((currentTimestamp/frameInterval - frameCount - 1));
+            queueSize.Add((currentTimestamp/frameInterval - frameCount + 1));
 
             // Drop current processing frame
             if (this.currentTimestamp > ((this.frameCount - 1) * this.frameInterval) + this.slo)

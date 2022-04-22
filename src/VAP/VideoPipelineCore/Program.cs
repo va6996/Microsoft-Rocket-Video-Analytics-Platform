@@ -46,16 +46,15 @@ namespace VideoPipelineCore
         static void Main(string[] args)
         {
             //parse arguments
-            Simulator skippingEnabledSimulator = new Simulator(300, 300, true);
-            Simulator skippingDisabledSimulator = new Simulator(300, 300, false);
-            
+
             DateTime startTime = DateTime.Now;
-            
+
             if (args.Length < 4)
             {
                 Console.WriteLine("Usage: <exe> <video url> <cfg file> <samplingFactor> <resolutionFactor> <category1> <category2> ...");
                 return;
             }
+
 
             string videoUrl = args[0];
             bool isVideoStream;
@@ -68,17 +67,19 @@ namespace VideoPipelineCore
                 isVideoStream = false;
                 videoUrl = @"media/" + args[0];
             }
+
             string lineFile = @"cfg/" + args[1];
             int SAMPLING_FACTOR = int.Parse(args[2]);
             double RESOLUTION_FACTOR = double.Parse(args[3]);
 
             string testName = args[5];
-            
+
             HashSet<string> category = new HashSet<string>();
-            for (int i = 5; i < args.Length; i++)
+            for (int i = 6; i < args.Length; i++)
             {
                 category.Add(args[i]);
             }
+
 
             //initialize pipeline settings
             string[] stringPplConfigs = args[4].Split(',');
@@ -87,6 +88,7 @@ namespace VideoPipelineCore
             {
                 pplConfigs[i] = Convert.ToInt16(stringPplConfigs[i]);
             }
+
             // int pplConfig = Convert.ToInt16(ConfigurationManager.AppSettings["PplConfig"]);
             bool loop = false;
             bool displayRawVideo = false;
@@ -107,7 +109,7 @@ namespace VideoPipelineCore
             Dictionary<string, bool> occupancy = null;
             List<(string key, (System.Drawing.Point p1, System.Drawing.Point p2) coordinates)> lines = lineDetector.multiLaneDetector.getAllLines();
             List<Tuple<string, int[]>> convLines = lines == null ? null : Utils.Utils.ConvertLines(lines);
-            
+
             //-----LineTriggeredDNN (Darknet)-----
             LineTriggeredDNNDarknet ltDNNDarknet = null;
             List<Item> ltDNNItemListDarknet = null;
@@ -116,6 +118,7 @@ namespace VideoPipelineCore
                 ltDNNDarknet = new LineTriggeredDNNDarknet(lines);
                 ltDNNItemListDarknet = new List<Item>();
             }
+
 
             //-----LineTriggeredDNN (TensorFlow)-----
             LineTriggeredDNNTF ltDNNTF = null;
@@ -126,6 +129,7 @@ namespace VideoPipelineCore
                 ltDNNItemListTF = new List<Item>();
             }
 
+
             //-----LineTriggeredDNN (ONNX)-----
             LineTriggeredDNNORTYolo ltDNNOnnx = null;
             List<Item> ltDNNItemListOnnx = null;
@@ -135,6 +139,7 @@ namespace VideoPipelineCore
                 ltDNNItemListOnnx = new List<Item>();
             }
 
+
             //-----CascadedDNN (Darknet)-----
             CascadedDNNDarknet ccDNNDarknet = null;
             List<Item> ccDNNItemListDarknet = null;
@@ -143,6 +148,7 @@ namespace VideoPipelineCore
                 ccDNNDarknet = new CascadedDNNDarknet(lines);
                 ccDNNItemListDarknet = new List<Item>();
             }
+
 
             //-----CascadedDNN (ONNX)-----
             CascadedDNNORTYolo ccDNNOnnx = null;
@@ -154,6 +160,7 @@ namespace VideoPipelineCore
                 ccDNNItemListOnnx = new List<Item>();
             }
 
+
             //-----DNN on every frame (Darknet)-----
             FrameDNNDarknet frameDNNDarknet = null;
             List<Item> frameDNNDarknetItemList = null;
@@ -162,6 +169,7 @@ namespace VideoPipelineCore
                 frameDNNDarknet = new FrameDNNDarknet("YoloV3TinyCoco", Wrapper.Yolo.DNNMode.Frame, null);
                 frameDNNDarknetItemList = new List<Item>();
             }
+
 
             //-----DNN on every frame (TensorFlow)-----
             FrameDNNTF frameDNNTF = null;
@@ -172,6 +180,7 @@ namespace VideoPipelineCore
                 frameDNNTFItemList = new List<Item>();
             }
 
+
             //-----DNN on every frame (ONNX)-----
             FrameDNNOnnxYolo frameDNNOnnxYolo = null;
             List<Item> frameDNNONNXItemList = null;
@@ -180,27 +189,31 @@ namespace VideoPipelineCore
                 frameDNNOnnxYolo = new FrameDNNOnnxYolo(convLines, "yolov3", Wrapper.ORT.DNNMode.Frame);
                 frameDNNONNXItemList = new List<Item>();
             }
-            
+
+
             MaskRCNNOnnx rcnnOnnx = null;
             List<Item> maskRCNNONNXItemList = null;
             if (new int[] { 9 }.Intersect(pplConfigs).Any())
             {
                 rcnnOnnx = new MaskRCNNOnnx(convLines, "maskrcnn", Wrapper.ORT.DNNMode.Frame);
             }
-            
+
+
             FasterRCNNOnnx fasterRcnnOnnx = null;
             List<Item> fasterRCNNONNXItemList = null;
             if (new int[] { 10 }.Intersect(pplConfigs).Any())
             {
                 fasterRcnnOnnx = new FasterRCNNOnnx(convLines, "fasterrcnn", Wrapper.ORT.DNNMode.Frame);
             }
-            
+
+
             RetinaNetOnnx retinaNetOnnx = null;
             List<Item> retinaNetOnnxItemList = null;
             if (new int[] { 11 }.Intersect(pplConfigs).Any())
             {
                 retinaNetOnnx = new RetinaNetOnnx(convLines, "retinanet", Wrapper.ORT.DNNMode.Frame);
             }
+
 
             //-----Call ML models deployed on Azure Machine Learning Workspace-----
             AMLCaller amlCaller = null;
@@ -212,6 +225,7 @@ namespace VideoPipelineCore
                 ConfigurationManager.AppSettings["AMLAuthKey"],
                 ConfigurationManager.AppSettings["AMLServiceID"]);
             }
+
 
             //-----Write to DB-----
             List<Item> ItemList = null;
@@ -226,6 +240,8 @@ namespace VideoPipelineCore
             //RUN PIPELINE 
             DateTime prevTime = DateTime.Now;
             int iter = 0;
+            Simulator skippingEnabledSimulator = new Simulator(300, 300, true);
+            Simulator skippingDisabledSimulator = new Simulator(300, 300, false);
 
             Result result = new Result();
             while (true)
@@ -436,20 +452,26 @@ namespace VideoPipelineCore
             File.WriteAllText(@"benchmarks/" + testName + modelName  + "_" + videoName +".json", result.Serialize());
             
             skippingEnabledSimulator.calculateStatistics();
-            File.WriteAllText(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".json", skippingEnabledSimulator.Serialize());
+            skippingDisabledSimulator.experimentName = videoName;
+            skippingEnabledSimulator.experimentName = videoName;
+
+            skippingDisabledSimulator.modelName = modelName;
+            skippingEnabledSimulator.modelName = modelName;
+            
+            File.WriteAllText(@"./simulator/skipping_enabled_" + testName + modelName  + "_" + videoName +".json", skippingEnabledSimulator.Serialize());
             string[] resultlines =
             {
                 skippingEnabledSimulator.results
             };
-            File.WriteAllLinesAsync(@"./dropping_enabled_" + testName + modelName  + "_" + videoName +".log", resultlines);
-            
+            File.WriteAllLinesAsync(@"./simulator/skipping_enabled_" + testName + modelName  + "_" + videoName +".log", resultlines);
+
             skippingDisabledSimulator.calculateStatistics();
-            File.WriteAllText(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".json", skippingDisabledSimulator.Serialize());
+            File.WriteAllText(@"./simulator/skipping_disabled_" + testName + modelName  + "_" + videoName +".json", skippingDisabledSimulator.Serialize());
             string[] resultlines1 =
             {
                 skippingDisabledSimulator.results
             };
-            File.WriteAllLinesAsync(@"./dropping_disabled_" + testName + modelName  + "_" + videoName +".log", resultlines1);
+            File.WriteAllLinesAsync(@"./simulator/skipping_disabled_" + testName + modelName  + "_" + videoName +".log", resultlines1);
         }
 
         static void mergePredictions(List<List<string>> dest, List<List<string>> src)
