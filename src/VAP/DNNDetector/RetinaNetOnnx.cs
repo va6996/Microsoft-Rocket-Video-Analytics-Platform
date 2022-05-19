@@ -34,7 +34,7 @@ namespace DNNDetector
         {
             var container = new List<NamedOnnxValue>();
             var tensor1 = new DenseTensor<float>(imgData, new int[] { 1, 3, 480, 640 });
-            Console.WriteLine("tensor value is {0}", string.Join(",", tensor1));
+            // Console.WriteLine("tensor value is {0}", string.Join(",", tensor1));
             container.Add(NamedOnnxValue.CreateFromTensor<float>("input", tensor1));
             return container;
         }
@@ -200,7 +200,7 @@ namespace DNNDetector
 
             var output = results.AsEnumerable().ElementAt(0).AsTensor<float>();
 
-            Console.WriteLine("dimensions are {0}", string.Join(",", output.Dimensions.ToArray()));
+            // Console.WriteLine("dimensions are {0}", string.Join(",", output.Dimensions.ToArray()));
 
             for (int i = 0; i < 640; i++)
             {

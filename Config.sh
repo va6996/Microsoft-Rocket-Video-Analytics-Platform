@@ -20,5 +20,5 @@ wget --output-document="src/VAP/YoloWrapper/Yolo.Config/YoloV3TinyCoco/yolov3-ti
 wget --output-document="modelOnnx/yolov3ort.onnx" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-yolov3ort.onnx
 wget --output-document="modelOnnx/yolov3tinyort.onnx" https://aka.ms/Microsoft-Rocket-Video-Analytics-Platform-yolov3tinyort.onnx
 wget --output-document="modelOnnx/maskrcnnort.onnx" https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/mask-rcnn/model/MaskRCNN-10.onnx
-wget --output-document="modelOnnx/retinanet.onnx" https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/retinanet/model/retinanet-9.onnx
+wget --output-document="modelOnnx/retinanetort.onnx" https://github.com/onnx/models/raw/main/vision/object_detection_segmentation/fcn/model/fcn-resnet50-11.onnx
 mkdir benchmarks

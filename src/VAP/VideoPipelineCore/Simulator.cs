@@ -92,7 +92,7 @@ namespace VideoPipelineCore
             results += $"Dropped {this.drops} frames.\n";
             results += $"Skipped {this.skips} frames.\n";
             results += $"Average serving latency was {nonDroppedLatencies.Sum() / (frameCount - drops - skips)} " +
-                       $"of non-dropped/skipped frame.\n ";
+                       $"of non-dropped/skipped frame.\n";
             results += $"Average latency across all frames is {allLatencies.Sum() / allLatencies.Count}.\n";
             results += $"Min latency was {min}.\n";
             results += $"Max latency was {max}.\n";
