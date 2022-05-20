@@ -86,7 +86,7 @@ namespace VideoPipelineCore
 
         public void calculateStatistics()
         {
-            int min = nonDroppedLatencies.Min(), max = nonDroppedLatencies.Max();
+            int min = allLatencies.Min(), max = allLatencies.Max();
 
             results += $"Processed {this.frameCount} frames.\n";
             results += $"Dropped {this.drops} frames.\n";
