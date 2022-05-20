@@ -240,11 +240,13 @@ namespace VideoPipelineCore
             //RUN PIPELINE 
             DateTime prevTime = DateTime.Now;
             int iter = 0;
-            Simulator skippingEnabledSimulator = new Simulator(300, 300, true);
-            Simulator skippingDisabledSimulator = new Simulator(300, 300, false);
+            // Simulator skippingEnabledSimulator = new Simulator(300, 300, true);
+            // Simulator skippingDisabledSimlator = new Simulator(300, 300, true);
+            FpsSimulator skippingDisabledSimulator = new FpsSimulator(300, 30, false);
+            FpsSimulator skippingEnabledSimulator = new FpsSimulator(300, 30, true);
 
             Result result = new Result();
-            while (true)
+            while (skippingDisabledSimulator.GetCurrentTimestamp() < 100 * 1000)
             {   
                 Console.WriteLine("Current Timestamp is {0}", skippingEnabledSimulator.getCurrentTimestamp());
 
